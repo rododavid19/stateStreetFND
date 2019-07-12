@@ -5,20 +5,12 @@
 
 "Historical Data"
 1) 19 year data starting 01/02/01, ending 05/31/19
-2) DB called "histData"
-3) 6gb worth of data, probably too much
-4) DB Entry Format
-    i) HistoricalData contains Collections based on [YYYY-MM]
-    ii) Each tick object in the collection is formatted as follows
-        {_id: ObjectId("auto generated hex id")
-         DateTime: "20010102 041733000" ->(YYYYMMDD HHMMSSNNN)
-         Day: "02"
-         Hour: "04"
-         Minute "17"
-         BidQuote: "0.947"
-         AskQuote: "0.9465"
-         Volume: "0"
-        }
+2) DB using arctic wrapper. Use the following lines to initialize historical data
+        store = Arctic('localhost')
+        store.initialize_library('HistTickStore')
+        histlibrary = store['HistTickStore']
+3) 6gb of raw data, compressed to 2gb with arctic store
+4) Access dataframe objects representing a months worth of data by using data = histLibrary.read("YYYY-MM")
 
 "Cached Algorithm Data"
 1) Caches all algorithms run, including the data it is run on
@@ -35,11 +27,18 @@
 3) No Volume information from HISTDATA
     A) No aggregate volume information is available in forex. The only volume data available is broker specific volume, and is not free.
 
+"Hashing & Storing"
+1) hashPrimitiveAndStore(inspect.getsource(realTimeUpdate), input_data, result_data)
+    A) realTimeUpdate is any primitive function,
+        TODO: Utilize https://github.com/manahl/arctic to store result_data
+
+
 TODO:
-1) Correctly import and format histDATA
-    A) Currently tick data is imported correctly, however it takes ages to import all data. Took 3-4 hours to import the first 3 years of data
 2) Correctly import and format rtData
 3) Get tick data with volume data?
 4) Create query methods to find and extract data from db
 5) Create update/add methods to add data to the db
+6) Create method to extrapolate minute data from tick data
+7) https://github.com/manahl/arctic implement this in order to store time series, tick data and np data quickly into mongodb
+
 
