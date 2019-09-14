@@ -3,8 +3,8 @@ import numpy as np
 from PandasBE import piEval
 import pandas as pd
 import hashlib
-import matplotlib.pyplot as plt
-import xlrd
+#import matplotlib.pyplot as plt
+#import xlrd
 
 
 forex = pd.read_csv('forex.csv')
@@ -44,16 +44,32 @@ def randomWalkSeries2(initialValue= -100, sigma=.002, start='2019-01-01', end='2
 
 
 
+
 with Network() as n:
 # 'forex': forex,
-    sourceDict = { 'fake': randomWalkSeries(), 'forex': randomWalkSeries2()}  # here series are loaded
-    equal(seriesSource('fake'), seriesSource('fake'))
-    add(seriesSource('fake'), seriesSource('fake'))
+
+    sourceDict = {'fake': randomWalkSeries()}  # here series are loaded
+
+
+    add(seriesSource('fake'), seriesSource('fake') )
+    macd(seriesSource('fake'))
+    x = ema(seriesSource('fake'),10)
+    y = ema(seriesSource('fake'),10)
+    z = x - y
+    w = z - x
+
+
+   # macd(seriesSource('fake'))
+   # add(seriesSource('fake'), seriesSource('fake'))
+   # equal(seriesSource('fake'), seriesSource('fake'))
  #   equal(a, b)
     #macd(seriesSource('fake'))
 
     sinkDict = piEval(n, sourceDict)                # here network objects are mapped to their values and evaluated
     n.report()
+
+
+    print(sinkDict)
 
 
 

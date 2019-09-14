@@ -115,22 +115,12 @@ def mapSourceDict(network, sourceDict):
 
     # Bind sources to objects
     # here check for non-Data 'type' like "add" then map arguments to actual data, .i.e  'a' = source, 'b' = source2
-    i = 0
-    for obj in network.children:
-       if obj.type in SOURCE_TYPES:
-           #TODO: only one below these is necessary but still unsure of what strenght is gained by binding all objects.... 1st option taken with backedn support.
-           obj.data = sourceDict[obj.name] # load sources by hierarchy, i increments accordingly as SOURCE_TYPE is confirmed
-          # obj.made[0].data = sourceDict['source'] # 'made' tied to arguments in Function call
-           i = i +1
-       if obj.type is 'macd':  #todo: create set for Modules
-           j = 0
-           for prim in obj.children:
-               if prim.type not in SOURCE_TYPES:  # change the not in
-                   # TODO: only one below these is necessary but still unsure of what strenght is gained by binding all objects.... 1st option taken with backedn support.
-                   prim.data = sourceDict[names[j]]  # load sources by hierarchy, i increments accordingly as SOURCE_TYPE is confirmed
-                   # obj.made[0].data = sourceDict['source'] # 'made' tied to arguments in Function call
-                   j = j + 1
 
+    for obj in network.children:
+       if obj.type in SOURCE_TYPES: #TODO: this can be stronger by mapping actual Object type vs. a str as it's now
+           obj.arguments.data = sourceDict[obj.name] # load sources by hierarchy, i increments accordingly as SOURCE_TYPE is confirmed
+
+       # 5:47 fix
 
 
 # Return a dict mapping the names of each Sink object to the result of the sink
@@ -139,7 +129,13 @@ def mapSinks(network):
     sinks = [obj for obj in network.children if obj.type not in SOURCE_TYPES]  # TODO: change to check if in SINK_TYPES. Reference bug is current issue
     d = {}
     for sink in sinks:
-        d[sink.name] = sink.arguments["result"]  # here make tuple of name and data of result
+
+        if type(sink) is Module:
+            for prim in sink.children:
+                if prim.type not in SOURCE_TYPES:
+                    d[prim.name] = prim.arguments.result
+        else:
+            d[sink.name] = sink.arguments.result  # here make tuple of name and data of result, TODO:
     return d
 
 
@@ -190,11 +186,18 @@ def piEval(network, sourceDict):
          continue
         try:
 
-            f = PRIMITIVE_MAP[p.type]
+            if type(p) is Module:
+                for prim in p.children:
+
+                    if prim.type not in SOURCE_TYPES:
+
+                        f = PRIMITIVE_MAP[prim.type]
+                        f(prim)
+            else:
+                f = PRIMITIVE_MAP[p.type]
+                f(p)
         except:
             raise Exception(
                 ('Bug?: Object %s is an instance of an ' +
                  'unrecognized class %s') % (p.name, type(p)))
-        f(p) # calling function with non-source argument Primitive 'p'
-
     return mapSinks(network)

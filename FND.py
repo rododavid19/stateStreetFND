@@ -207,6 +207,10 @@ class Series():
         return subtract(self, other)
 
 
+
+
+
+
 class DataFrame():
 
     def __init__(self, name, dfDict):
@@ -473,5 +477,5 @@ def macd(series: Series, shortSpan: int=12, longSpan: int=22, signalSpan: int=9,
     return dataFrame({'delta':delta, 'signal':signal, 'histogram': histogram}, name='df')
 
 
-SOURCE_TYPES = ['seriesSource']
+SOURCE_TYPES = ['seriesSource', 'dataFrame']
 SINK_TYPES = [seriesSink, DataFrame]
