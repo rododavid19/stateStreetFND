@@ -203,11 +203,62 @@ class Series():
         p.makes(self)
         self.name = Network().seriesName(name)
 
+    ## Binary Operators ##
+
     def __sub__(self, other):
         return subtract(self, other)
 
+    def __add__(self, other):
+        return add(self, other)
 
+    def __mul__(self, other):
+        return multiply(self, other)
 
+    def __truediv__(self, other):
+        return divide(self, other)
+
+    def __mod__(self, other):
+        return remainder(self, other)
+
+ ## Comparison Operators ##
+    def __lt__(self, other):
+        return lessThan(self, other)
+
+    def __gt__(self, other):
+        return greaterThan(self, other)
+
+    def __le__(self, other):
+        return lessOrEqual(self, other)
+
+    def __ge__(self, other):
+        return greaterOrEqual(self, other)
+
+    def __eq__(self, other):
+        return equal(self, other)
+
+    def __ne__(self, other):
+        return notEqual(self, other)
+
+    ## Unary Operators ##
+
+    def __neg__(self):
+        return neg(self)
+
+## Assignment operators ##
+    def __isub__(self, other):
+        return subtract(self, other)
+
+    def __iadd__(self, other):
+        return add(self, other)
+
+    def __imul__(self, other):
+        return multiply(self, other)
+
+    def __idiv__(self, other):
+        return divide(self, other)
+
+    def __imod__(self, other):
+        return remainder(self, other)
 
 
 

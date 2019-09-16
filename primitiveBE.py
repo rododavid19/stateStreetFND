@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 
-## TODO: FOR ALL add wether Series or DF. Then also check how data was passed??
 
 #TODO: to add support for non-series constant then just add checker before pd operation and calc. result as necessary
 
@@ -15,7 +14,6 @@ def ADD(p):
             p.arguments.data = pd.DataFrame(a + b)
         if type(a) and type(b) is pd.Series:
             p.arguments.data = pd.Series(a + b)
-
 
     # Subtract(a, b, difference)
 def SUBTRACT(p):
@@ -50,15 +48,16 @@ def DIVIDE(p):
     # SMA(s, window, ema)
 def SMA(p):
         s = p.arguments["series"].parent.arguments.data
-        window = p.arguments['window']
-        p.arguments.data = s.rolling(window=window).mean()
+        if type(s) is pd.DataFrame:
+            window = p.arguments['window']
+            p.arguments.data = s.rolling(window=window).mean()
 
     # EMA(s, span, ema)
 def EMA(p):
         s = p.arguments['series'].parent.arguments.data
-        s = pd.DataFrame(s)
-        span = p.arguments['span']
-        p.arguments.data = s.ewm(span=span).mean()
+        if type(s) is pd.DataFrame:
+            span = p.arguments['span']
+            p.arguments.data = s.ewm(span=span).mean()
 
 def NEG(p):
     a = p.arguments["a"].parent.arguments.data
@@ -85,76 +84,89 @@ def REMAINDER(p):
         p.arguments.data = pd.Series(a % b)
 
 def FLOOR(p):
-   a = p.arguments["a"].parent.arguments.data
-   b = p.arguments["b"].parent.arguments.data
-   result = pd.Series(a + b)
-   p.arguments.result = result
+    a = p.arguments["a"].parent.arguments.data
+    if type(a) is pd.DataFrame or pd.Series:
+        p.arguments.data = np.floor(a)
 
 def CEILING(p):
-   a = p.arguments["a"].parent.arguments.data
-   b = p.arguments["b"].parent.arguments.data
-   result = pd.Series(a + b)
-   p.arguments.result = result
+    a = p.arguments["a"].parent.arguments.data
+    if type(a) is pd.DataFrame or pd.Series:
+        p.arguments.data = np.ceil(a)
 
 def LOG(p):
-   a = p.arguments["a"].parent.arguments.data
-   result = pd.Series(a)
-   result = np.log(result)
-   p.arguments.result = result
+    a = p.arguments["a"].parent.arguments.data
+    if type(a) is pd.DataFrame or pd.Series:
+        p.arguments.data = np.log(a)
 
 ## COMPARISON OPERATIONS ##
 
 def LT(p):
-   a = p.arguments["a"].parent.arguments.data
-   b = p.arguments["b"].parent.arguments.data
-   result = pd.Series.lt(a, b)
-   p.arguments.result = result
+    a = p.arguments["a"].parent.arguments.data
+    b = p.arguments["b"].parent.arguments.data
+
+    if type(a) and type(b) is pd.DataFrame:
+        p.arguments.data = pd.DataFrame.lt(a, b)
+    if type(a) and type(b) is pd.Series:
+        p.arguments.data = pd.Series.lt(a, b)
 
 
 def LE(p):
-   a = p.arguments["a"].parent.arguments.data
-   b = p.arguments["b"].parent.arguments.data
-   result = pd.Series.le(a, b)
-   p.arguments.result = result
-
-def EQ(p):
-   if p.arguments["a"].parent.arguments.data is not 0:
     a = p.arguments["a"].parent.arguments.data
     b = p.arguments["b"].parent.arguments.data
-    data = pd.Series.eq(a, b)
-    p.arguments.data = data
+
+    if type(a) and type(b) is pd.DataFrame:
+        p.arguments.data = pd.DataFrame.le(a, b)
+    if type(a) and type(b) is pd.Series:
+        p.arguments.data = pd.Series.le(a, b)
+
+def EQ(p):
+    a = p.arguments["a"].parent.arguments.data
+    b = p.arguments["b"].parent.arguments.data
+
+    if type(a) and type(b) is pd.DataFrame:
+        p.arguments.data = pd.DataFrame.eq(a, b)
+    if type(a) and type(b) is pd.Series:
+        p.arguments.data = pd.Series.eq(a, b)
 
 def GE(p):
-   a = p.arguments["a"].parent.arguments.data
-   b = p.arguments["b"].parent.arguments.data
-   result = pd.Series.ge(a, b)
-   p.arguments.result = result
+    a = p.arguments["a"].parent.arguments.data
+    b = p.arguments["b"].parent.arguments.data
+
+    if type(a) and type(b) is pd.DataFrame:
+        p.arguments.data = pd.DataFrame.ge(a, b)
+    if type(a) and type(b) is pd.Series:
+        p.arguments.data = pd.Series.ge(a, b)
 
 def NE(p):
-   a = p.arguments["a"].parent.arguments.data
-   b = p.arguments["b"].parent.arguments.data
-   result = pd.Series.ne(a, b)
-   p.arguments.result = result
+    a = p.arguments["a"].parent.arguments.data
+    b = p.arguments["b"].parent.arguments.data
+
+    if type(a) and type(b) is pd.DataFrame:
+        p.arguments.data = pd.DataFrame.ne(a, b)
+    if type(a) and type(b) is pd.Series:
+        p.arguments.data = pd.Series.ne(a, b)
 
 def GT(p):
-   a = p.arguments["a"].parent.arguments.data
-   b = p.arguments["b"].parent.arguments.data
-   result = pd.Series.gt(a, b)
-   p.arguments.result = result
+    a = p.arguments["a"].parent.arguments.data
+    b = p.arguments["b"].parent.arguments.data
+
+    if type(a) and type(b) is pd.DataFrame:
+        p.arguments.data = pd.DataFrame.gt(a, b)
+    if type(a) and type(b) is pd.Series:
+        p.arguments.data = pd.Series.gt(a, b)
 
 
 def PRICEFLOOR(p):
-   a = p.arguments["a"].parent.arguments.data
-   b = p.arguments["b"].parent.arguments.data
-   result = pd.Series.gt(a, b)
-   p.arguments.result = result
+    a = p.arguments["a"].parent.arguments.data
+    if type(a) is pd.DataFrame or pd.Series:
+        p.arguments.data = np.floor(a)
 
 
 def PRICECEILING(p):
-   a = p.arguments["a"].parent.arguments.data
-   b = p.arguments["b"].parent.arguments.data
-   result = pd.Series.gt(a, b)
-   p.arguments.result = result
+    a = p.arguments["a"].parent.arguments.data
+    if type(a) is pd.DataFrame or pd.Series:
+        p.arguments.data = np.ceil(a)
+
 
 
 def ADDTICKS(p):
@@ -172,27 +184,32 @@ def STDEV(p):
 
 
 def MIN(p):
-    series = p.arguments["series"].parent.arguments.data
-    result = series.min()   #TODO: check if there is 'axis' value and evlaute on that if needed otherwise do this
-    p.arguments.result = result
+    a = p.arguments["a"].parent.arguments.data
+    if type(a) is pd.DataFrame:
+        p.arguments.data = pd.DataFrame(a).min()
+    if type(a) is pd.Series:
+        p.arguments.data = pd.Series(a).min()
 
 
 def MAX(p):
-    series = p.arguments["series"].parent.arguments.data
-    result = series.max()  # TODO: check if there is 'axis' value and evlaute on that if needed otherwise do this
-    p.arguments.result = result
+    a = p.arguments["a"].parent.arguments.data
+    if type(a) is pd.DataFrame:
+        p.arguments.data = pd.DataFrame(a).max()
+    if type(a) is pd.Series:
+        p.arguments.data = pd.Series(a).max()
 
 
 def SUM(p):
-    series = p.arguments["series"].parent.arguments.data
-    result = series.sum()  # TODO: check if there is 'axis' value and evlaute on that if needed otherwise do this
-    p.arguments.result = result
+    a = p.arguments["a"].parent.arguments.data
+    if type(a) is pd.DataFrame:
+        p.arguments.data = pd.DataFrame(a).sum()
+    if type(a) is pd.Series:
+        p.arguments.data = pd.Series(a).sum()
 
 
-def DELAY(p):           # is 'shift()' in pandas.series lib okay for this??
-    series = p.arguments["series"].parent.arguments.data
-    result = series.shift()  # TODO: check if there is 'axis' value and evlaute with that parameter if needed, otherwise do general op
-    p.arguments.result = result
-
-
-
+def DELAY(p):
+    a = p.arguments["a"].parent.arguments.data
+    if type(a) is pd.DataFrame:
+        p.arguments.data = pd.DataFrame(a).shift()
+    if type(a) is pd.Series:
+        p.arguments.data = pd.Series(a).shift()

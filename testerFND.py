@@ -48,9 +48,12 @@ def randomWalkSeries2(initialValue= -100, sigma=.002, start='2019-01-01', end='2
 with Network() as n:
 # 'forex': forex,
 
-    sourceDict = { 'forex':forex}  # here series are loaded
+    sourceDict = { 'fake':randomWalkSeries()}  # here series are loaded
 
-    b = add(seriesSource('forex'), seriesSource('forex'))
+    a = seriesSource('fake')
+    a = -a
+    a += a
+
 
   #  add(seriesSource('fake'), seriesSource('del') )
    # macd(seriesSource('fake'))
@@ -59,14 +62,12 @@ with Network() as n:
    # z = x - y
    # w = z - x
 
-
-
     sinkDict = piEval(n, sourceDict)                # here network objects are mapped to their values and evaluated
     n.report()
 
-    df = sinkDict.get('__2__/signal')
-    df.plot()
-    plt.show()
+   # df = sinkDict.get('__2__/signal')
+   # df.plot()
+   # plt.show()
 
 
 
