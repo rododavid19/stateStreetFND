@@ -3,7 +3,7 @@ import numpy as np
 from PandasBE import piEval
 import pandas as pd
 import hashlib
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 #import xlrd
 
 
@@ -40,7 +40,7 @@ def randomWalkSeries2(initialValue= -100, sigma=.002, start='2019-01-01', end='2
     values[0] = value
     for i in range(1, len(values)):
         values[i] = values[i - 1] + (values[i - 1] * norm[i] * sigma)
-    return pd.Series(values, index=dates)
+    return pd.DataFrame(values, index=dates)
 
 
 
@@ -48,28 +48,26 @@ def randomWalkSeries2(initialValue= -100, sigma=.002, start='2019-01-01', end='2
 with Network() as n:
 # 'forex': forex,
 
-    sourceDict = {'fake': randomWalkSeries()}  # here series are loaded
+    sourceDict = { 'forex':forex}  # here series are loaded
 
+    b = add(seriesSource('forex'), seriesSource('forex'))
 
-    add(seriesSource('fake'), seriesSource('fake') )
-    macd(seriesSource('fake'))
-    x = ema(seriesSource('fake'),10)
-    y = ema(seriesSource('fake'),10)
-    z = x - y
-    w = z - x
-
-
+  #  add(seriesSource('fake'), seriesSource('del') )
    # macd(seriesSource('fake'))
-   # add(seriesSource('fake'), seriesSource('fake'))
-   # equal(seriesSource('fake'), seriesSource('fake'))
- #   equal(a, b)
-    #macd(seriesSource('fake'))
+   # x = ema(seriesSource('fake'),10)
+   # y = ema(seriesSource('fake'),10)
+   # z = x - y
+   # w = z - x
+
+
 
     sinkDict = piEval(n, sourceDict)                # here network objects are mapped to their values and evaluated
     n.report()
 
+    df = sinkDict.get('__2__/signal')
+    df.plot()
+    plt.show()
 
-    print(sinkDict)
 
 
 

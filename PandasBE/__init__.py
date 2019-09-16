@@ -133,9 +133,9 @@ def mapSinks(network):
         if type(sink) is Module:
             for prim in sink.children:
                 if prim.type not in SOURCE_TYPES:
-                    d[prim.name] = prim.arguments.result
+                    d[prim.name] = prim.arguments.data
         else:
-            d[sink.name] = sink.arguments.result  # here make tuple of name and data of result, TODO:
+            d[sink.name] = sink.arguments.data  # here make tuple of name and data of result, TODO:
     return d
 
 

@@ -2,96 +2,87 @@ import pandas as pd
 import numpy as np
 
 ## TODO: FOR ALL add wether Series or DF. Then also check how data was passed??
-##TODO: FOR ALL Modules that are defined then also make sure that data is appended correctly,
-# but O(n^2) time complexity .
 
 #TODO: to add support for non-series constant then just add checker before pd operation and calc. result as necessary
+
+
 # Add(a, b sum)
 def ADD(p):
-   a = p.arguments["a"].parent.arguments.data
-   b = p.arguments["b"].parent.arguments.data
-   if type(a) and type(b) is pd.DataFrame:
-       p.arguments.result = pd.DataFrame(a + b)
-   if type(a) and type(b) is pd.Series:
-       p.arguments.result = pd.Series(a + b)
-
-
-    # Subtract(a, b, difference)
-def SUBTRACT(p):
-
-    if  hasattr(p.arguments["a"].parent.arguments, 'result') and hasattr(p.arguments["b"].parent.arguments, 'result'):
-        # if here then, operation is happening with previously processed arguments.   i.e  x = ema, y = ema,  z = x - y. 'z' brings you here
-        a = p.arguments["a"].parent.arguments.result
-        b = p.arguments["b"].parent.arguments.result
-
-        if type(a) and type(b) is pd.DataFrame:
-            p.arguments.result = pd.DataFrame(a - b)
-        if type(a) and type(b) is pd.Series:
-            p.arguments.result = pd.Series(a - b)
-    else:
         a = p.arguments["a"].parent.arguments.data
         b = p.arguments["b"].parent.arguments.data
 
         if type(a) and type(b) is pd.DataFrame:
-            p.arguments.result = pd.DataFrame(a - b)
+            p.arguments.data = pd.DataFrame(a + b)
         if type(a) and type(b) is pd.Series:
-            p.arguments.result = pd.Series(a - b)
+            p.arguments.data = pd.Series(a + b)
+
+
+    # Subtract(a, b, difference)
+def SUBTRACT(p):
+        a = p.arguments["a"].parent.arguments.data
+        b = p.arguments["b"].parent.arguments.data
+
+        if type(a) and type(b) is pd.DataFrame:
+            p.arguments.data = pd.DataFrame(a - b)
+        if type(a) and type(b) is pd.Series:
+            p.arguments.data = pd.Series(a - b)
 
     # Multiply(a, b, product)
 def MULTIPLY(p):
-    a = p.arguments["a"].parent.arguments.data
-    b = p.arguments["b"].parent.arguments.data
-    result = pd.Series(a * b)
-    p.arguments.result = result
+        a = p.arguments["a"].parent.arguments.data
+        b = p.arguments["b"].parent.arguments.data
+
+        if type(a) and type(b) is pd.DataFrame:
+            p.arguments.data = pd.DataFrame(a * b)
+        if type(a) and type(b) is pd.Series:
+            p.arguments.data = pd.Series(a * b)
 
     # Divide(a, b, quotient, remainder=None)
 def DIVIDE(p):
-    a = p.arguments["a"].parent.arguments.data
-    b = p.arguments["b"].parent.arguments.data
-    result = pd.Series(a / b)
-    p.arguments.result = result
+        a = p.arguments["a"].parent.arguments.data
+        b = p.arguments["b"].parent.arguments.data
+
+        if type(a) and type(b) is pd.DataFrame:
+            p.arguments.data = pd.DataFrame(a / b)
+        if type(a) and type(b) is pd.Series:
+            p.arguments.data  = pd.Series(a / b)
 
     # SMA(s, window, ema)
 def SMA(p):
         s = p.arguments["series"].parent.arguments.data
         window = p.arguments['window']
-        p.arguments['result'] = s.rolling(window=window).mean() # not creating 'result', just replacing argument 'series' reference with calc. value. NOTE: this removes argument reference so this might have to be changed if
-                                                                # if reference is needed after network processing??  TODO: this was changed from previous comment and now result is created but this is a waste if 'series' can be replaced.
+        p.arguments.data = s.rolling(window=window).mean()
+
     # EMA(s, span, ema)
 def EMA(p):
-
-    if  hasattr(p.arguments['series'].parent.arguments, 'result'):
-        s = p.arguments['series'].parent.arguments.result
-        s = pd.DataFrame(s)
-        span = p.arguments['span']
-        p.arguments.result = s.ewm(span=span).mean()
-
-
-    else:
         s = p.arguments['series'].parent.arguments.data
         s = pd.DataFrame(s)
         span = p.arguments['span']
-        p.arguments.result = s.ewm(span=span).mean()
-
-
-
-
+        p.arguments.data = s.ewm(span=span).mean()
 
 def NEG(p):
-   a = p.arguments["a"].parent.arguments.data
-   result = pd.Series(-a)   # TODO: add filters to adjust for data type
-   p.arguments.result = result
+    a = p.arguments["a"].parent.arguments.data
+    if type(a) is pd.DataFrame:
+        p.arguments.data = pd.DataFrame(-a)
+    if type(a) is pd.Series:
+        p.arguments.data = pd.Series(-a)
+
 
 def ABS(p):
-   a = p.arguments["a"].parent.arguments.data
-   result = pd.Series(a).abs()
-   p.arguments.result = result
+    a = p.arguments["a"].parent.arguments.data
+    if type(a) is pd.DataFrame:
+        p.arguments.data = pd.DataFrame(a).abs()
+    if type(a) is pd.Series:
+        p.arguments.data = pd.Series(a).abs()
 
 def REMAINDER(p):
-   a = p.arguments["a"].parent.arguments.data
-   b = p.arguments["b"].parent.arguments.data
-   result = pd.Series(a % b)        #fmod() is generally preferred when working with floats, while Python’s x % y is preferred when working with integers.
-   p.arguments.result = result
+    a = p.arguments["a"].parent.arguments.data
+    b = p.arguments["b"].parent.arguments.data
+
+    if type(a) and type(b) is pd.DataFrame:
+        p.arguments.data = pd.DataFrame(a % b)
+    if type(a) and type(b) is pd.Series:
+        p.arguments.data = pd.Series(a % b)
 
 def FLOOR(p):
    a = p.arguments["a"].parent.arguments.data
@@ -130,8 +121,8 @@ def EQ(p):
    if p.arguments["a"].parent.arguments.data is not 0:
     a = p.arguments["a"].parent.arguments.data
     b = p.arguments["b"].parent.arguments.data
-    result = pd.Series.eq(a, b)
-    p.arguments.result = result
+    data = pd.Series.eq(a, b)
+    p.arguments.data = data
 
 def GE(p):
    a = p.arguments["a"].parent.arguments.data
