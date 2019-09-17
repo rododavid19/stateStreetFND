@@ -48,14 +48,14 @@ def DIVIDE(p):
     # SMA(s, window, ema)
 def SMA(p):
         s = p.arguments["series"].parent.arguments.data
-        if type(s) is pd.DataFrame:
+        if type(s) is pd.DataFrame or pd.Series:
             window = p.arguments['window']
             p.arguments.data = s.rolling(window=window).mean()
 
     # EMA(s, span, ema)
 def EMA(p):
         s = p.arguments['series'].parent.arguments.data
-        if type(s) is pd.DataFrame:
+        if type(s) is pd.DataFrame or type(s) is pd.Series:
             span = p.arguments['span']
             p.arguments.data = s.ewm(span=span).mean()
 

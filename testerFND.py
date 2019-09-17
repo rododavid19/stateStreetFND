@@ -50,26 +50,23 @@ with Network() as n:
 
     sourceDict = { 'fake':randomWalkSeries()}  # here series are loaded
 
-    a = seriesSource('fake')
-    a = -a
-    a += a
+   # a = seriesSource('fake')
+  #  a = -a
+ #   a += a
+    macd(seriesSource('fake'))
 
 
-  #  add(seriesSource('fake'), seriesSource('del') )
+    add(seriesSource('fake'), seriesSource('fake') )
    # macd(seriesSource('fake'))
    # x = ema(seriesSource('fake'),10)
    # y = ema(seriesSource('fake'),10)
    # z = x - y
    # w = z - x
 
-    sinkDict = piEval(n, sourceDict)                # here network objects are mapped to their values and evaluated
+    sinkDict = piEval(n, sourceDict)
     n.report()
 
-   # df = sinkDict.get('__2__/signal')
-   # df.plot()
-   # plt.show()
 
 
 
 
-##TODO: attemp another network here as "m" and make sure it's the same object?? or new Newtwork.
