@@ -11,6 +11,10 @@ def ADD(p):
         b = p.arguments["b"].parent.arguments.data
 
         if type(a) and type(b) is pd.DataFrame:
+            #a_dates = a.take([0], axis=1) #TODO not sure if we need these?
+            #b_dates = b.take([0], axis=1)
+            #a = a.drop(a.columns[[0]], axis=1) #TODO Question: are data frames for our project always going to have first column be dates?
+            #b = b.drop(b.columns[[0]], axis=1)
             p.arguments.data = pd.DataFrame(a + b)
         if type(a) and type(b) is pd.Series:
             p.arguments.data = pd.Series(a + b)
