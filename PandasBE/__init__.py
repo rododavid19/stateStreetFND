@@ -2,6 +2,7 @@
 import pandas as pd
 import numpy as np
 from FND import *
+from primitiveBE import *
 
 
 
@@ -60,6 +61,8 @@ PRIMITIVE_MAP = {
     "max": MAX,
     "sum": SUM,
     "delay": DELAY,
+    "getColumns": GETCOLUMNS,
+    "putColumns": PUTCOLUMNS,
 
   #  SeriesSink: PandasImmediate.seriesSink,
    # DataFrameSink: PandasImmediate.dataFrameSink,

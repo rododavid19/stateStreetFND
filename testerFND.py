@@ -1,5 +1,7 @@
 from FND import *
 import numpy as np
+from pymongo import MongoClient
+from arctic import Arctic
 from PandasBE import piEval
 import pandas as pd
 import hashlib
@@ -7,7 +9,7 @@ import matplotlib.pyplot as plt
 #import xlrd
 
 
-forex = pd.read_csv('forex.csv')
+forex = pd.read_csv('tests/forex.csv')
 
 
 def encrypt_string(hash_string):
@@ -44,22 +46,31 @@ def randomWalkSeries2(initialValue= -100, sigma=.002, start='2019-01-01', end='2
 
 
 
+
 with Network() as n:
-    # 'forex': forex,
+# 'forex': forex,
 
     sourceDict = { 'fake':randomWalkSeries()}  # here series are loaded
 
-    # a = seriesSource('fake')
-    # a = -a
-    # a += a
+   # a = seriesSource('fake')
+  #  a = -a
+ #   a += a
     macd(seriesSource('fake'))
 
+
     add(seriesSource('fake'), seriesSource('fake') )
-    # macd(seriesSource('fake'))
-    # x = ema(seriesSource('fake'),10)
-    # y = ema(seriesSource('fake'),10)
-    # z = x - y
-    # w = z - x
+    getColumns(forex, ["DateTime", "BidPrice1", "AskPrice2"], True)
+   # macd(seriesSource('fake'))
+   # x = ema(seriesSource('fake'),10)
+   # y = ema(seriesSource('fake'),10)
+   # z = x - y
+   # w = z - x
 
     sinkDict = piEval(n, sourceDict)
-    #n.report()
+    n.report()
+
+
+
+
+
+
