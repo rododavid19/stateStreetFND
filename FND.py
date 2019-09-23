@@ -166,7 +166,7 @@ class Network():
             return '    ' * level
         
         def _report(obj, level):
-            if obj is Network():
+            if obj == Network():
                 print('%sNetwork Report' % prefix(level))
                 for child in obj.children:
                     _report(child, level + 1)

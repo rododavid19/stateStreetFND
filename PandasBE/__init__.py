@@ -123,6 +123,7 @@ def mapSourceDict(network, sourceDict):
        if obj.type in SOURCE_TYPES: #TODO: this can be stronger by mapping actual Object type vs. a str as it's now
            obj.arguments.data = sourceDict[obj.name] # load sources by hierarchy, i increments accordingly as SOURCE_TYPE is confirmed
 
+       # 5:47 fix
 
 
 # Return a dict mapping the names of each Sink object to the result of the sink
