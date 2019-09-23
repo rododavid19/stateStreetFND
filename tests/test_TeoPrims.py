@@ -14,6 +14,37 @@ def randomWalkSeries(initialValue=100, sigma=.002, start='2019-01-01', end='2019
         values[i] = values[i - 1] + (values[i - 1] * norm[i] * sigma)
     return pd.Series(values, index=dates)
 
+def randomWalkSeries2(initialValue= -100, sigma=.002, start='2019-01-01', end='2019-01-31', freq='H'):
+    dates = pd.date_range(start=start, end=end, freq=freq)
+    values = np.zeros(len(dates))
+    norm = np.random.normal(size=len(dates))
+    value = initialValue
+    values[0] = value
+    for i in range(1, len(values)):
+        values[i] = values[i - 1] + (values[i - 1] * norm[i] * sigma)
+    return pd.Series(values, index=dates)
+
+
+def randomWalkDataframe(initialValue=100, sigma=.002, start='2019-01-01', end='2019-01-31', freq='H'):
+    dates = pd.date_range(start=start, end=end, freq=freq)
+    values = np.zeros(len(dates))
+    norm = np.random.normal(size=len(dates))
+    value = initialValue
+    values[0] = value
+    for i in range(1, len(values)):
+        values[i] = values[i - 1] + (values[i - 1] * norm[i] * sigma)
+    return pd.DataFrame(values, index=dates)
+
+def randomWalkDataframe2(initialValue= -100, sigma=.002, start='2019-01-01', end='2019-01-31', freq='H'):
+    dates = pd.date_range(start=start, end=end, freq=freq)
+    values = np.zeros(len(dates))
+    norm = np.random.normal(size=len(dates))
+    value = initialValue
+    values[0] = value
+    for i in range(1, len(values)):
+        values[i] = values[i - 1] + (values[i - 1] * norm[i] * sigma)
+    return pd.DataFrame(values, index=dates)
+
 class testNetwork_ColumnMethods(unittest.TestCase):
 
     def test_GetColString(self):
@@ -141,8 +172,6 @@ class testNetwork_ColumnMethods(unittest.TestCase):
             columnDict = {'Zero': forex['Zero']}
             putColumns(df, columnDict, newDf)
             self.assertRaises(Exception, piEval, n, sourceDict)
-
-
 
 class testNetwork_EMA_STDEV_MIN_MAX_SUM_DELAY(unittest.TestCase):
 
@@ -319,3 +348,336 @@ class testNetwork_EMA_STDEV_MIN_MAX_SUM_DELAY(unittest.TestCase):
             self.assertIsNone(pd.testing.assert_series_equal(toComp,toComp2))
             n.report()
 
+class testNetwork_GreaterThan_LessThan_PriceFloor_PriceCeiling_AddTicks_SMA(unittest.TestCase):
+
+    def test_GreaterThan_Equal_Series(self):
+        with Network() as n:
+            sourceDict = {'fake': randomWalkSeries()}  # here series are loaded
+            a = seriesSource('fake')
+            b = seriesSource('fake')
+            greaterThan(a, b, name='test')
+            toComp = pd.Series.gt(sourceDict['fake'], sourceDict['fake'])
+            sinkDict = piEval(n, sourceDict)
+            toComp2 = sinkDict['test']
+            self.assertIsNone(pd.testing.assert_series_equal(toComp, toComp2))
+            n.report()
+
+    def test_GreaterThan_Error(self):
+        with Network() as n:
+            sourceDict = {'fake': randomWalkSeries(), "fake2": randomWalkDataframe()}  # here series are loaded
+            a = seriesSource('fake')
+            b = seriesSource('fake2')
+            greaterThan(a, b, name='test')
+            sinkDict = piEval(n, sourceDict)
+            self.assertRaises(Exception, piEval, n, sourceDict)
+            n.report()
+
+    def test_GreaterThanOrEqual_Error(self):
+        with Network() as n:
+            sourceDict = {'fake': randomWalkSeries(), "fake2": randomWalkDataframe()}  # here series are loaded
+            a = seriesSource('fake')
+            b = seriesSource('fake2')
+            greaterOrEqual(a, b, name='test')
+            sinkDict = piEval(n, sourceDict)
+            self.assertRaises(Exception, piEval, n, sourceDict)
+            n.report()
+
+    def test_LessThan_Error(self):
+        with Network() as n:
+            sourceDict = {'fake': randomWalkSeries(), "fake2": randomWalkDataframe()}  # here series are loaded
+            a = seriesSource('fake')
+            b = seriesSource('fake2')
+            lessThan(a, b, name='test')
+            sinkDict = piEval(n, sourceDict)
+            self.assertRaises(Exception, piEval, n, sourceDict)
+            n.report()
+
+    def test_LessThanOrEqual_error(self):
+        with Network() as n:
+            sourceDict = {'fake': randomWalkSeries(), "fake2": randomWalkDataframe()}  # here series are loaded
+            a = seriesSource('fake')
+            b = seriesSource('fake2')
+            lessOrEqual(a, b, name='test')
+            sinkDict = piEval(n, sourceDict)
+            self.assertRaises(Exception, piEval, n, sourceDict)
+            n.report()
+
+    def test_GreaterThan_A_Series(self):
+        with Network() as n:
+            sourceDict = {'fake': randomWalkSeries(), 'less': randomWalkSeries2()}  # here series are loaded
+            a = seriesSource('fake')
+            b = seriesSource('less')
+            greaterThan(a, b, name='test')
+            toComp = pd.Series.gt(sourceDict['fake'], sourceDict['less'])
+            sinkDict = piEval(n, sourceDict)
+            toComp2 = sinkDict['test']
+            self.assertIsNone(pd.testing.assert_series_equal(toComp, toComp2))
+            n.report()
+
+    def test_GreaterThan_B_Series(self):
+        with Network() as n:
+            sourceDict = {'fake': randomWalkSeries(), 'less': randomWalkSeries2()}  # here series are loaded
+            a = seriesSource('less')
+            b = seriesSource('fake')
+            greaterThan(a, b, name='test')
+            toComp = pd.Series.gt(sourceDict['less'], sourceDict['fake'])
+            sinkDict = piEval(n, sourceDict)
+            toComp2 = sinkDict['test']
+            self.assertIsNone(pd.testing.assert_series_equal(toComp, toComp2))
+            n.report()
+
+    def test_GreaterThan_Equal_DataFrame(self):
+        with Network() as n:
+            forex = pd.read_csv('forex.csv')
+            sourceDict = {'forex': forex}  # here series are loaded
+            a = seriesSource('forex')
+            b = seriesSource('forex')
+            greaterThan(a, b, name='test')
+            toComp = pd.Series.gt(sourceDict['forex'], sourceDict['forex'])
+            sinkDict = piEval(n, sourceDict)
+            toComp2 = sinkDict['test']
+            self.assertIsNone(pd.testing.assert_frame_equal(toComp, toComp2))
+            n.report()
+
+    def test_GreaterThan_A_DataFrame(self):
+        with Network() as n:
+            sourceDict = {'fake': randomWalkDataframe(), "less": randomWalkDataframe2()}  # here series are loaded
+            a = seriesSource('fake')
+            b = seriesSource('less')
+            greaterThan(a, b, name='test')
+            toComp = pd.Series.gt(sourceDict['fake'], sourceDict['less'])
+            sinkDict = piEval(n, sourceDict)
+            toComp2 = sinkDict['test']
+            self.assertIsNone(pd.testing.assert_frame_equal(toComp, toComp2))
+            n.report()
+
+    def test_GreaterThan_B_DataFrame(self):
+        with Network() as n:
+            sourceDict = {'fake': randomWalkDataframe(), "less": randomWalkDataframe2()}  # here series are loaded
+            a = seriesSource('less')
+            b = seriesSource('fake')
+            greaterThan(a, b, name='test')
+            toComp = pd.Series.gt(sourceDict['less'], sourceDict['fake'])
+            sinkDict = piEval(n, sourceDict)
+            toComp2 = sinkDict['test']
+            self.assertIsNone(pd.testing.assert_frame_equal(toComp, toComp2))
+            n.report()
+
+    def test_GreaterThanOrEqual_Equal_Series(self):
+        with Network() as n:
+            sourceDict = {'fake': randomWalkSeries()}  # here series are loaded
+            a = seriesSource('fake')
+            b = seriesSource('fake')
+            greaterOrEqual(a, b, name='test')
+            toComp = pd.Series.ge(sourceDict['fake'], sourceDict['fake'])
+            sinkDict = piEval(n, sourceDict)
+            toComp2 = sinkDict['test']
+            self.assertIsNone(pd.testing.assert_series_equal(toComp, toComp2))
+            n.report()
+
+    def test_GreaterThanOrEqual_A_Series(self):
+        with Network() as n:
+            sourceDict = {'fake': randomWalkSeries(), 'less': randomWalkSeries2()}  # here series are loaded
+            a = seriesSource('fake')
+            b = seriesSource('less')
+            greaterOrEqual(a, b, name='test')
+            toComp = pd.Series.ge(sourceDict['fake'], sourceDict['less'])
+            sinkDict = piEval(n, sourceDict)
+            toComp2 = sinkDict['test']
+            self.assertIsNone(pd.testing.assert_series_equal(toComp, toComp2))
+            n.report()
+
+    def test_GreaterThanOrEqual_B_Series(self):
+        with Network() as n:
+            sourceDict = {'fake': randomWalkSeries(), 'less':randomWalkSeries2()}  # here series are loaded
+            a = seriesSource('less')
+            b = seriesSource('fake')
+            greaterOrEqual(a, b, name='test')
+            toComp = pd.Series.ge(sourceDict['less'], sourceDict['fake'])
+            sinkDict = piEval(n, sourceDict)
+            toComp2 = sinkDict['test']
+            self.assertIsNone(pd.testing.assert_series_equal(toComp, toComp2))
+            n.report()
+
+    def test_GreaterThanOrEqual_Equal_DataFrame(self):
+        with Network() as n:
+            forex = pd.read_csv('forex.csv')
+            sourceDict = {'forex': forex}  # here series are loaded
+            a = seriesSource('forex')
+            b = seriesSource('forex')
+            greaterOrEqual(a, b, name='test')
+            toComp = pd.Series.ge(sourceDict['forex'], sourceDict['forex'])
+            sinkDict = piEval(n, sourceDict)
+            toComp2 = sinkDict['test']
+            self.assertIsNone(pd.testing.assert_frame_equal(toComp, toComp2))
+            n.report()
+
+    def test_GreaterThanOrEqual_A_DataFrame(self):
+        with Network() as n:
+            sourceDict = {'fake': randomWalkDataframe(), "less": randomWalkDataframe2()}  # here series are loaded
+            a = seriesSource('fake')
+            b = seriesSource('less')
+            greaterOrEqual(a, b, name='test')
+            toComp = pd.Series.ge(sourceDict['fake'], sourceDict['less'])
+            sinkDict = piEval(n, sourceDict)
+            toComp2 = sinkDict['test']
+            self.assertIsNone(pd.testing.assert_frame_equal(toComp, toComp2))
+            n.report()
+
+    def test_GreaterThanOrEqual_B_DataFrame(self):
+        with Network() as n:
+            sourceDict = {'fake': randomWalkDataframe(), "less": randomWalkDataframe2()}  # here series are loaded
+            a = seriesSource('less')
+            b = seriesSource('fake')
+            greaterOrEqual(a, b, name='test')
+            toComp = pd.Series.ge(sourceDict['less'], sourceDict['fake'])
+            sinkDict = piEval(n, sourceDict)
+            toComp2 = sinkDict['test']
+            self.assertIsNone(pd.testing.assert_frame_equal(toComp, toComp2))
+            n.report()
+
+    def test_LessThan_Equal_Series(self):
+        with Network() as n:
+            sourceDict = {'fake': randomWalkSeries()}  # here series are loaded
+            a = seriesSource('fake')
+            b = seriesSource('fake')
+            lessThan(a, b, name='test')
+            toComp = pd.Series.lt(sourceDict['fake'], sourceDict['fake'])
+            sinkDict = piEval(n, sourceDict)
+            toComp2 = sinkDict['test']
+            self.assertIsNone(pd.testing.assert_series_equal(toComp, toComp2))
+            n.report()
+
+    def test_LessThan_A_Series(self):
+        with Network() as n:
+            sourceDict = {'fake': randomWalkSeries(), 'less': randomWalkSeries2()}  # here series are loaded
+            a = seriesSource('fake')
+            b = seriesSource('less')
+            lessThan(a, b, name='test')
+            toComp = pd.Series.lt(sourceDict['fake'], sourceDict['less'])
+            sinkDict = piEval(n, sourceDict)
+            toComp2 = sinkDict['test']
+            self.assertIsNone(pd.testing.assert_series_equal(toComp, toComp2))
+            n.report()
+
+    def test_LessThan_B_Series(self):
+        with Network() as n:
+            sourceDict = {'fake': randomWalkSeries(), 'less': randomWalkSeries2()}  # here series are loaded
+            a = seriesSource('less')
+            b = seriesSource('fake')
+            lessThan(a, b, name='test')
+            toComp = pd.Series.lt(sourceDict['less'], sourceDict['fake'])
+            sinkDict = piEval(n, sourceDict)
+            toComp2 = sinkDict['test']
+            self.assertIsNone(pd.testing.assert_series_equal(toComp, toComp2))
+            n.report()
+
+    def test_LessThan_Equal_DataFrame(self):
+        with Network() as n:
+            forex = pd.read_csv('forex.csv')
+            sourceDict = {'forex': forex}  # here series are loaded
+            a = seriesSource('forex')
+            b = seriesSource('forex')
+            lessThan(a, b, name='test')
+            toComp = pd.Series.lt(sourceDict['forex'], sourceDict['forex'])
+            sinkDict = piEval(n, sourceDict)
+            toComp2 = sinkDict['test']
+            self.assertIsNone(pd.testing.assert_frame_equal(toComp, toComp2))
+            n.report()
+
+    def test_LessThan_A_DataFrame(self):
+        with Network() as n:
+            sourceDict = {'fake': randomWalkDataframe(), "less": randomWalkDataframe2()}  # here series are loaded
+            a = seriesSource('fake')
+            b = seriesSource('less')
+            lessThan(a, b, name='test')
+            toComp = pd.Series.lt(sourceDict['fake'], sourceDict['less'])
+            sinkDict = piEval(n, sourceDict)
+            toComp2 = sinkDict['test']
+            self.assertIsNone(pd.testing.assert_frame_equal(toComp, toComp2))
+            n.report()
+
+    def test_LessThan_B_DataFrame(self):
+        with Network() as n:
+            sourceDict = {'fake': randomWalkDataframe(), "less": randomWalkDataframe2()}  # here series are loaded
+            a = seriesSource('less')
+            b = seriesSource('fake')
+            lessThan(a, b, name='test')
+            toComp = pd.Series.lt(sourceDict['less'], sourceDict['fake'])
+            sinkDict = piEval(n, sourceDict)
+            toComp2 = sinkDict['test']
+            self.assertIsNone(pd.testing.assert_frame_equal(toComp, toComp2))
+            n.report()
+
+    def test_LessThanOrEqual_Equal_Series(self):
+        with Network() as n:
+            sourceDict = {'fake': randomWalkSeries()}  # here series are loaded
+            a = seriesSource('fake')
+            b = seriesSource('fake')
+            lessOrEqual(a, b, name='test')
+            toComp = pd.Series.le(sourceDict['fake'], sourceDict['fake'])
+            sinkDict = piEval(n, sourceDict)
+            toComp2 = sinkDict['test']
+            self.assertIsNone(pd.testing.assert_series_equal(toComp, toComp2))
+            n.report()
+
+    def test_LessThanOrEqual_A_Series(self):
+        with Network() as n:
+            sourceDict = {'fake': randomWalkSeries(), 'less': randomWalkSeries2()}  # here series are loaded
+            a = seriesSource('fake')
+            b = seriesSource('less')
+            lessOrEqual(a, b, name='test')
+            toComp = pd.Series.le(sourceDict['fake'], sourceDict['less'])
+            sinkDict = piEval(n, sourceDict)
+            toComp2 = sinkDict['test']
+            self.assertIsNone(pd.testing.assert_series_equal(toComp, toComp2))
+            n.report()
+
+    def test_LessThanOrEqual_B_Series(self):
+        with Network() as n:
+            sourceDict = {'fake': randomWalkSeries(), 'less':randomWalkSeries2()}  # here series are loaded
+            a = seriesSource('less')
+            b = seriesSource('fake')
+            lessOrEqual(a, b, name='test')
+            toComp = pd.Series.le(sourceDict['less'], sourceDict['fake'])
+            sinkDict = piEval(n, sourceDict)
+            toComp2 = sinkDict['test']
+            self.assertIsNone(pd.testing.assert_series_equal(toComp, toComp2))
+            n.report()
+
+    def test_LessThanOrEqual_Equal_DataFrame(self):
+        with Network() as n:
+            forex = pd.read_csv('forex.csv')
+            sourceDict = {'forex': forex}  # here series are loaded
+            a = seriesSource('forex')
+            b = seriesSource('forex')
+            lessOrEqual(a, b, name='test')
+            toComp = pd.Series.le(sourceDict['forex'], sourceDict['forex'])
+            sinkDict = piEval(n, sourceDict)
+            toComp2 = sinkDict['test']
+            self.assertIsNone(pd.testing.assert_frame_equal(toComp, toComp2))
+            n.report()
+
+    def test_LessThanOrEqual_A_DataFrame(self):
+        with Network() as n:
+            sourceDict = {'fake': randomWalkDataframe(), "less": randomWalkDataframe2()}  # here series are loaded
+            a = seriesSource('fake')
+            b = seriesSource('less')
+            lessOrEqual(a, b, name='test')
+            toComp = pd.Series.le(sourceDict['fake'], sourceDict['less'])
+            sinkDict = piEval(n, sourceDict)
+            toComp2 = sinkDict['test']
+            self.assertIsNone(pd.testing.assert_frame_equal(toComp, toComp2))
+            n.report()
+
+    def test_LessThanOrEqual_B_DataFrame(self):
+        with Network() as n:
+            sourceDict = {'fake': randomWalkDataframe(), "less": randomWalkDataframe2()}  # here series are loaded
+            a = seriesSource('less')
+            b = seriesSource('fake')
+            lessOrEqual(a, b, name='test')
+            toComp = pd.Series.le(sourceDict['less'], sourceDict['fake'])
+            sinkDict = piEval(n, sourceDict)
+            toComp2 = sinkDict['test']
+            self.assertIsNone(pd.testing.assert_frame_equal(toComp, toComp2))
+            n.report()
