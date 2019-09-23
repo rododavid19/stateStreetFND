@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
+import FND
 
+#TODO: FOR ALL add wether Series or DF. Then also check how data was passed??
 
 #TODO: to add support for non-series constant then just add checker before pd operation and calc. result as necessary
 
@@ -84,14 +86,22 @@ def REMAINDER(p):
         p.arguments.data = pd.Series(a % b)
 
 def FLOOR(p):
-    a = p.arguments["a"].parent.arguments.data
-    if type(a) is pd.DataFrame or pd.Series:
-        p.arguments.data = np.floor(a)
+    #Compute the largest integer less than or equal to a / b.
+    #TODO make test suite
+   a = p.arguments["a"].parent.data
+   b = p.arguments["b"].parent.data
+   c = pd.series(a / b)
+   result = np.floor(c)
+   p.arguments["result"] = result
 
 def CEILING(p):
-    a = p.arguments["a"].parent.arguments.data
-    if type(a) is pd.DataFrame or pd.Series:
-        p.arguments.data = np.ceil(a)
+    #Compute the smallest integer greater than or equal to a / b.
+    #TODO Make test suite
+   a = p.arguments["a"].parent.data
+   b = p.arguments["b"].parent.data
+   c = pd.series( a / b)
+   result = np.ceil(c)
+   p.arguments["result"] = result
 
 def LOG(p):
     a = p.arguments["a"].parent.arguments.data
@@ -170,13 +180,15 @@ def PRICECEILING(p):
 
 
 def ADDTICKS(p):
-   a = p.arguments["a"].parent.arguments.data
-   b = p.arguments["b"].parent.arguments.data
+   #Todo Figure out how to add ticks to series objects
+   a = p.arguments["a"].parent.data
+   b = p.arguments["b"].parent.data
    result = pd.Series.gt(a, b)
    p.arguments.result = result
 
 
 def STDEV(p):
+    #TODO: add exception for no series or dataframe object?
     a = p.arguments["series"].parent.arguments.data
     window = p.arguments["window"]   # tODO: what is purpose of 'axis'/'window' here??
     a = a.std()
@@ -184,7 +196,8 @@ def STDEV(p):
 
 
 def MIN(p):
-    a = p.arguments["a"].parent.arguments.data
+    # TODO: add exception for no series or dataframe object?
+    a = p.arguments["series"].parent.arguments.data
     if type(a) is pd.DataFrame:
         p.arguments.data = pd.DataFrame(a).min()
     if type(a) is pd.Series:
@@ -192,7 +205,8 @@ def MIN(p):
 
 
 def MAX(p):
-    a = p.arguments["a"].parent.arguments.data
+    # TODO: add exception for no series or dataframe object?
+    a = p.arguments["series"].parent.arguments.data
     if type(a) is pd.DataFrame:
         p.arguments.data = pd.DataFrame(a).max()
     if type(a) is pd.Series:
@@ -200,16 +214,75 @@ def MAX(p):
 
 
 def SUM(p):
-    a = p.arguments["a"].parent.arguments.data
+    # TODO: add exception for no series or dataframe object?
+    a = p.arguments["series"].parent.arguments.data
     if type(a) is pd.DataFrame:
         p.arguments.data = pd.DataFrame(a).sum()
     if type(a) is pd.Series:
         p.arguments.data = pd.Series(a).sum()
 
+def DELAY(p):           # is 'shift()' in pandas.series lib okay for this??
+    series = p.arguments["series"].parent.arguments.data
+    #dly = p.arguments["dly"].parent.argument.data
+    samples = p.arguments['samples']
+    if isinstance(series, pd.Series):
+        result = pd.Series(series).shift(periods=samples)
+    elif isinstance(series, pd.DataFrame):
+        result = pd.DataFrame(series).shift(periods=samples)
+    #result = series.shift(periods=samples)  # TODO: check if there is 'axis' value and evlaute with that parameter if needed, otherwise do general op
+    p.arguments.data = result
 
-def DELAY(p):
-    a = p.arguments["a"].parent.arguments.data
-    if type(a) is pd.DataFrame:
-        p.arguments.data = pd.DataFrame(a).shift()
-    if type(a) is pd.Series:
-        p.arguments.data = pd.Series(a).shift()
+
+
+#DATAFRAME OPERATIONS
+def GETCOLUMNS(p):
+    #Return one or more columns from a DataFrame, The columns parameter is interpreted as in Pandas (simplified). If columns is a string, that column is returned as a Series object. If columns is a list of strings, then a DataFrame of those columns is returned.
+    cols = p.arguments["colNames"]
+    if isinstance(cols, list):
+        if not(all(isinstance(item, str) for item in cols)):
+            raise TypeError(
+                ('Error, "colNames" must be either a string or a list of strings')
+            )
+    elif not(isinstance(cols, str)):
+        raise TypeError(
+            ('Error, "colNames" must be either a string or a list of strings')
+        )
+    datafr = p.arguments["series"].parent.arguments.data
+    if isinstance(cols, str):
+        result = datafr[cols]
+        p.arguments.data = result
+        return
+    elif isinstance(cols, list):
+        result = pd.DataFrame(columns=cols)
+        for s in cols:
+            result[s] = datafr[s]
+        p.arguments.data = result
+        return
+
+
+
+def PUTCOLUMNS(p):
+    #TODO: Column dict contains column names and series objects to put into newdf, so what does df do?
+    #TODO: Add check to make sure all series in colDict have same or compatible indices to newdf
+    datafr = p.arguments["series"].parent.arguments.data
+    coldict = dict(p.arguments["columnDict"])
+    newdf = p.arguments["newDf"].parent.arguments.data
+    currentColumns = list(newdf)
+    if not(set(currentColumns).isdisjoint(coldict.keys())):
+        raise Exception('Error colDict cannot contain any columns already in newDf')
+    if not(isinstance(newdf,pd.DataFrame)):
+        raise Exception('newDf must be a Dataframe object')
+    try:
+        for key in coldict.keys():
+            newdf[key] = coldict[key]
+        p.arguments.data = newdf
+    except:
+        raise Exception("Error appending columns to newDF, make sure indices align correctly")
+
+
+#def DELAY(p):
+#    a = p.arguments["a"].parent.arguments.data
+#    if type(a) is pd.DataFrame:
+#        p.arguments.data = pd.DataFrame(a).shift()
+#    if type(a) is pd.Series:
+#        p.arguments.data = pd.Series(a).shift()
