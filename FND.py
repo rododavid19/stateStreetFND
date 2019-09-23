@@ -8,6 +8,7 @@ import inspect
 
 ## %matplotlib inline              TODO: weird translate from jupter to .py
 import functools
+from primitiveBE import *
 
 
 # A tutorial on Python wrappers is at https://realpython.com/primer-on-python-decorators/.
@@ -429,7 +430,7 @@ def sma(series: Series, window: int, name: str=None) -> Series:
     return Series(name, series)
 
 @primitive
-def stdev(series: Series, window: int=None, name: str=None) -> Series:
+def stdev(series: Series, window=0, name: str=None) -> Series:
     return Series(name, series)
 
 @primitive

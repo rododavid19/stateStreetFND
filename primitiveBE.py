@@ -190,9 +190,23 @@ def ADDTICKS(p):
 def STDEV(p):
     #TODO: add exception for no series or dataframe object?
     a = p.arguments["series"].parent.arguments.data
-    window = p.arguments["window"]   # tODO: what is purpose of 'axis'/'window' here??
-    a = a.std()
-    p.arguments.result = a
+    if type(a) is pd.Series:
+        p.arguments.data = a.std()
+    elif type(a) is pd.DataFrame:
+        window = p.arguments['window']
+        if not(type(window) is int or str):
+            raise Exception("'window must be either a string an int'")
+        colNames = list(a)
+        if type(window) is str:
+            if not(window in colNames):
+                raise Exception("'window' must be a valid column name in the dataframe")
+            p.arguments.data = a.loc[:, window].std()
+        elif type(window) is int:
+            p.arguments.data = a.std(axis=window)
+
+
+
+
 
 
 def MIN(p):
@@ -225,9 +239,9 @@ def DELAY(p):           # is 'shift()' in pandas.series lib okay for this??
     series = p.arguments["series"].parent.arguments.data
     #dly = p.arguments["dly"].parent.argument.data
     samples = p.arguments['samples']
-    if isinstance(series, pd.Series):
+    if type(series) is pd.Series:
         result = pd.Series(series).shift(periods=samples)
-    elif isinstance(series, pd.DataFrame):
+    elif type(series) is pd.DataFrame:
         result = pd.DataFrame(series).shift(periods=samples)
     #result = series.shift(periods=samples)  # TODO: check if there is 'axis' value and evlaute with that parameter if needed, otherwise do general op
     p.arguments.data = result
@@ -248,11 +262,11 @@ def GETCOLUMNS(p):
             ('Error, "colNames" must be either a string or a list of strings')
         )
     datafr = p.arguments["series"].parent.arguments.data
-    if isinstance(cols, str):
+    if type(cols) is str:
         result = datafr[cols]
         p.arguments.data = result
         return
-    elif isinstance(cols, list):
+    elif type(cols) is list:
         result = pd.DataFrame(columns=cols)
         for s in cols:
             result[s] = datafr[s]

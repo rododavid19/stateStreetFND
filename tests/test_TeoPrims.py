@@ -169,15 +169,53 @@ class testNetwork_EMA_STDEV_MIN_MAX_SUM_DELAY(unittest.TestCase):
             self.assertIsNone(pd.testing.assert_series_equal(toComp, toComp2))
             n.report()
 
-    def test_STDEV(self):
+    def test_STDEV_Window0(self):
         with Network() as n:
             forex = pd.read_csv("forex.csv")
             sourceDict = {'forex': forex}  # here series are loaded
             df = seriesSource('forex')
-            columnNames = "DateTime"
-            getColumns(df, columnNames)
+            stdev(df, window=0,name="test")
+            toComp = sourceDict['forex'].std(axis=0)
             sinkDict = piEval(n, sourceDict)
+            toComp2 = sinkDict['test']
+            self.assertIsNone(pd.testing.assert_series_equal(toComp, toComp2))
             n.report()
+
+    def test_STDEV_Window1(self):
+        with Network() as n:
+            forex = pd.read_csv("forex.csv")
+            sourceDict = {'forex': forex}  # here series are loaded
+            df = seriesSource('forex')
+            stdev(df, window=1,name="test")
+            toComp = sourceDict['forex'].std(axis=1)
+            sinkDict = piEval(n, sourceDict)
+            toComp2 = sinkDict['test']
+            self.assertIsNone(pd.testing.assert_series_equal(toComp, toComp2))
+            n.report()
+
+    def test_STDEV_WindowString(self):
+        with Network() as n:
+            forex = pd.read_csv("forex.csv")
+            sourceDict = {'forex': forex}  # here series are loaded
+            df = seriesSource('forex')
+            stdev(df, window="AskPrice1",name="test")
+            toComp = sourceDict['forex'].loc[:, "AskPrice1"].std()
+            sinkDict = piEval(n, sourceDict)
+            toComp2 = sinkDict['test']
+            self.assertEqual(toComp, toComp2)
+            n.report()
+
+    def test_STDEV_Series(self):
+        with Network() as n:
+            sourceDict = {'fake': randomWalkSeries()}  # here series are loaded
+            df = seriesSource('fake')
+            stdev(df, name="test")
+            toComp = sourceDict['fake'].std()
+            sinkDict = piEval(n, sourceDict)
+            toComp2 = sinkDict['test']
+            self.assertEqual(toComp,toComp2)
+            n.report()
+
 
     def test_MINSeries(self):
         #Basic Mintest for Series object
