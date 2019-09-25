@@ -168,6 +168,6 @@ class Tester(TestCase):
             sourceDict = {'fake': randomWalkSeries3(), 'fake2': randomWalkSeries4()}  # here series are loaded
             notEqual(seriesSource('fake'), seriesSource('fake2'))
             sinkDict = piEval(n, sourceDict)
-            for x in sinkDict['__0__'].values:
+            for x in sinkDict['__0__'].value:
                 self.assertTrue(x)
         print("End of NE Test 1")
