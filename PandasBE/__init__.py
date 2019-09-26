@@ -62,6 +62,8 @@ PRIMITIVE_MAP = {
     "delay": DELAY,
     "putColumns": PUTCOLUMNS,
     "getColumns": GETCOLUMNS,
+    "timeWeightMean": TIMEWEIGHTMEAN,
+    "timeWeightSTD": TIMEWEIGHTSTD,
 
   #  SeriesSink: PandasImmediate.seriesSink,
    # DataFrameSink: PandasImmediate.dataFrameSink,

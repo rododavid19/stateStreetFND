@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import FND
+import datetime
 
 #TODO: FOR ALL add wether Series or DF. Then also check how data was passed??
 
@@ -184,7 +185,7 @@ def ADDTICKS(p):
    a = p.arguments["a"].parent.data
    b = p.arguments["b"].parent.data
    result = pd.Series.gt(a, b)
-   p.arguments.result = result
+   p.arguments.data = result
 
 
 def STDEV(p):
@@ -203,10 +204,6 @@ def STDEV(p):
             p.arguments.data = a.loc[:, window].std()
         elif type(window) is int:
             p.arguments.data = a.std(axis=window)
-
-
-
-
 
 
 def MIN(p):
@@ -273,11 +270,8 @@ def GETCOLUMNS(p):
         p.arguments.data = result
         return
 
-
-
 def PUTCOLUMNS(p):
     #TODO: Column dict contains column names and series objects to put into newdf, so what does df do?
-    #TODO: Add check to make sure all series in colDict have same or compatible indices to newdf
     datafr = p.arguments["series"].parent.arguments.data
     coldict = dict(p.arguments["columnDict"])
     newdf = p.arguments["newDf"].parent.arguments.data
@@ -294,9 +288,48 @@ def PUTCOLUMNS(p):
         raise Exception("Error appending columns to newDF, make sure indices align correctly")
 
 
-#def DELAY(p):
-#    a = p.arguments["a"].parent.arguments.data
-#    if type(a) is pd.DataFrame:
-#        p.arguments.data = pd.DataFrame(a).shift()
-#    if type(a) is pd.Series:
-#        p.arguments.data = pd.Series(a).shift()
+#Time-Weighted Interval Operations
+#def TIMEWEIGHTMEAN(p):
+#    series = p.arguments["series"].parent.arguments.data
+#    columnNames = list(series)
+#    interval = p.arguments["interval"]
+#    result = pd.DataFrame(columns=columnNames)
+#    if type(interval[0]) is int and type(interval[1]) is int:
+#        result = series.rolling(window=(interval[1] - interval[0]))
+#        p.arguments.data = result
+#        return
+#    elif type(interval[0]) is datetime.timedelta and type(interval[1]) is datetime.timedelta:
+#        p.arguments.data = result
+#        return
+
+#TODO Make my own implementation
+def TIMEWEIGHTMEAN(p):
+    s = p.arguments['series'].parent.arguments.data
+    value_col = p.arguments['value_col']
+    time_col = p.arguments['time_col']
+    new_col_name = value_col + ' Time Weighted Mean'
+    timeWindow = p.arguments['timewindow']
+    fill_value = np.nan
+
+    for idx, row in s.iterrows():
+        # Filter for only values that are days_back for averaging.
+        days_back_fil = (s[time_col] < row[time_col]) & (s[time_col] >= row[time_col] + pd.Timedelta(timeWindow))
+        df = s[days_back_fil]
+
+        df['secs-back'] = (row[time_col] - df[time_col]) / np.timedelta64(1,'s')  # need to divide by np.timedelta day to get number back
+        df['weight'] = df[value_col] * df['secs-back']
+
+        try:
+            df['tw_avg'] = df['weight'].sum() / df['secs-back'].sum()
+            time_avg = df['tw_avg'].iloc[0]  # Get single value of the tw_avg
+            s.loc[idx, new_col_name] = time_avg
+        except ZeroDivisionError:
+            s.loc[idx, new_col_name] = fill_value
+
+    p.arguments.data = s
+
+
+
+def TIMEWEIGHTSTD(p):
+    series = p.arguments["series"].parent.arguments.data
+    interval = p.arguments["interval"]

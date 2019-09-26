@@ -496,12 +496,17 @@ def intervalCount(series: Series, window: int, name: str=None) -> Series:
 # The time-weighted indicators also do not include the event that triggers the update, since its time-weight is 0.
 
 
+#@primitive
+#def timeWeightMean(series: Series, interval, minInterval=None, name: str=None) -> Series:
+#    return Series(name, series)
+
+#TODO MAKE MY OWN IMPLEMENTATION
 @primitive
-def timeWeightedMean(series: Series, window: int, name: str=None) -> Series:
+def timeWeightMean(series : Series, value_col: str, time_col: str, timewindow: datetime, name: str=None):
     return Series(name, series)
 
 @primitive
-def timeWeightedStdev(series: Series, window: int, name: str=None) -> Series:
+def timeWeightSTD(series: Series, interval, minInterval=None, name: str=None) -> Series:
     return Series(name, series)
 
 

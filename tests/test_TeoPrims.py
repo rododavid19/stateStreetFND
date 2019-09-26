@@ -24,7 +24,6 @@ def randomWalkSeries2(initialValue= -100, sigma=.002, start='2019-01-01', end='2
         values[i] = values[i - 1] + (values[i - 1] * norm[i] * sigma)
     return pd.Series(values, index=dates)
 
-
 def randomWalkDataframe(initialValue=100, sigma=.002, start='2019-01-01', end='2019-01-31', freq='H'):
     dates = pd.date_range(start=start, end=end, freq=freq)
     values = np.zeros(len(dates))
@@ -70,7 +69,6 @@ class testNetwork_ColumnMethods(unittest.TestCase):
             columnNames = 1
             getColumns(df, columnNames)
             self.assertRaises(Exception, piEval, n, sourceDict)
-
 
     def test_GetColArray(self):
         #Checks to make sure inputting a list of string returns the correct columns as a pd.Dataframe
@@ -348,7 +346,7 @@ class testNetwork_EMA_STDEV_MIN_MAX_SUM_DELAY(unittest.TestCase):
             self.assertIsNone(pd.testing.assert_series_equal(toComp,toComp2))
             n.report()
 
-class testNetwork_GreaterThan_LessThan_PriceFloor_PriceCeiling_AddTicks_SMA(unittest.TestCase):
+class testNetwork_GreaterThan_LessThan_SMA(unittest.TestCase):
 
     def test_GreaterThan_Equal_Series(self):
         with Network() as n:
@@ -681,3 +679,50 @@ class testNetwork_GreaterThan_LessThan_PriceFloor_PriceCeiling_AddTicks_SMA(unit
             toComp2 = sinkDict['test']
             self.assertIsNone(pd.testing.assert_frame_equal(toComp, toComp2))
             n.report()
+
+    def test_SMADataframe(self):
+        with Network() as n:
+            forex = pd.read_csv("forex.csv")
+            sourceDict = {'forex': forex}  # here series are loaded
+            df = seriesSource('forex')
+            sma(df, window=10, name="test")
+            toComp = sourceDict['forex'].rolling(window=10).mean()
+            sinkDict = piEval(n, sourceDict)
+            toComp2 = sinkDict['test']
+            self.assertIsNone(pd.testing.assert_frame_equal(toComp, toComp2))
+            n.report()
+
+    def test_SMASeries(self):
+        with Network() as n:
+            sourceDict = {'fake': randomWalkSeries()}
+            df = seriesSource('fake')
+            sma(df, window=10, name="test")
+            toComp = sourceDict['fake'].rolling(window=10).mean()
+            sinkDict = piEval(n, sourceDict)
+            toComp2 = sinkDict['test']
+            self.assertIsNone(pd.testing.assert_series_equal(toComp, toComp2))
+            n.report()
+
+class testNetowrk_TimeWeightedMean_TimeWeightedSTD(unittest.TestCase):
+
+    def test_TimeWeightMean(self):
+        with Network() as n:
+            forex = pd.read_csv('forex.csv')
+            sourceDict = {'forex':forex}
+            df = seriesSource('forex')
+            interval = (0, 2)
+            timeWeightMean(df, timewindow="2s", value_col="AskPrice1", time_col="DateTime", name="test")
+            sinkDict = piEval(n, sourceDict)
+            n.report()
+
+    def test_TimeWeightSTD(self):
+        with Network() as n:
+            forex = pd.read_csv('forex.csv')
+            sourceDict = {'forex': forex}
+            df = seriesSource('forex')
+            interval = (0, 2)
+            timeWeightSTD(df, interval=interval, name="test")
+            sinkDict = piEval(n, sourceDict)
+            n.report()
+
+
