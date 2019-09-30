@@ -52,6 +52,8 @@ PRIMITIVE_MAP = {
     "notEqual": NE,
     "greaterThan": GT,
     "greaterOrEqual": GE,
+    "floor": FLOOR,
+    "ceiling": CEILING,
     "priceFloor": PRICEFLOOR,
     "priceCeiling": PRICECEILING,
     "addTicks": ADDTICKS,
