@@ -5,7 +5,7 @@ from testerFND import *
 
 forex = pd.read_csv('forex.csv')
 #TODO for this data, it makes most sense for now to chop off the dates column and the zeros column, which cause problems
-forex = forex.drop(forex.columns[[0,5]], axis=1) #.values
+forex = forex.drop(forex.columns[[0,5]], axis=1) #.values ?
 
 
 class TestPrimitivesA(unittest.TestCase):
@@ -131,7 +131,7 @@ class TestPrimitivesA(unittest.TestCase):
         print("test successful")
 
     def test_DividePrimitiveDFDeep(self):
-        print("deep df testing primitive: mdivide...")
+        print("deep df testing primitive: divide...")
         with Network() as n:
             sourceDict = {'forex': forex}
             divide(seriesSource('forex'), seriesSource('forex'))
