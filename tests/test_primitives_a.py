@@ -5,12 +5,10 @@ from testerFND import *
 
 forex = pd.read_csv('forex.csv')
 #TODO for this data, it makes most sense for now to chop off the dates column and the zeros column, which cause problems
-forex = forex.drop(forex.columns[[0,5]], axis=1)
+forex = forex.drop(forex.columns[[0,5]], axis=1) #.values
+
 
 class TestPrimitivesA(unittest.TestCase):
-    """Note:
-    The dataframe tests take a long time (5/15 tests are df tests)
-    """
 
     def test_AddPrimitive(self):
         print("testing primitive: add...")
@@ -39,9 +37,10 @@ class TestPrimitivesA(unittest.TestCase):
             sourceDict = {'forex': forex}
             add(seriesSource('forex'), seriesSource('forex'))
             sinkDict = piEval(n, sourceDict)
-            for source, sink in zip(sourceDict['forex'].iterrows(), sinkDict['__0__'].iterrows()):
-                for i in range(1, len(source[1])):
-                    self.assertEqual(source[1][i]*2, sink[1][i])
+            pd.DataFrame.equals(forex.add(forex), sinkDict)
+            #for source, sink in zip(sourceDict['forex'].iterrows(), sinkDict['__0__'].iterrows()):
+             #   for i in range(1, len(source[1])):
+             #       self.assertEqual(source[1][i]*2, sink[1][i])
         print("test successful")
 
     def test_SubtractPrimitive(self):
@@ -103,9 +102,10 @@ class TestPrimitivesA(unittest.TestCase):
             sourceDict = {'forex': forex}
             multiply(seriesSource('forex'), seriesSource('forex'))
             sinkDict = piEval(n, sourceDict)
-            for source, sink in zip(sourceDict['forex'].iterrows(), sinkDict['__0__'].iterrows()):
-                for i in range(1, len(source[1])):
-                    self.assertEqual(source[1][i]*source[1][i], sink[1][i])
+            pd.DataFrame.equals(forex.subtract(forex), sinkDict)
+            # for source, sink in zip(sourceDict['forex'].iterrows(), sinkDict['__0__'].iterrows()):
+            #     for i in range(1, len(source[1])):
+            #         self.assertEqual(source[1][i]*source[1][i], sink[1][i])
         print("test successful")
 
     def test_DividePrimitive(self):
@@ -135,9 +135,10 @@ class TestPrimitivesA(unittest.TestCase):
             sourceDict = {'forex': forex}
             divide(seriesSource('forex'), seriesSource('forex'))
             sinkDict = piEval(n, sourceDict)
-            for source, sink in zip(sourceDict['forex'].iterrows(), sinkDict['__0__'].iterrows()):
-                for i in range(1, len(source[1])):
-                    self.assertEqual(source[1][i]/source[1][i], sink[1][i])
+            pd.DataFrame.equals(forex.divide(forex), sinkDict)
+            # for source, sink in zip(sourceDict['forex'].iterrows(), sinkDict['__0__'].iterrows()):
+            #     for i in range(1, len(source[1])):
+            #         self.assertEqual(source[1][i]/source[1][i], sink[1][i])
         print("test successful")
 
     def test_NegativePrimitive(self):
@@ -167,7 +168,8 @@ class TestPrimitivesA(unittest.TestCase):
             sourceDict = {'forex': forex}
             neg(seriesSource('forex'))
             sinkDict = piEval(n, sourceDict)
-            for source, sink in zip(sourceDict['forex'].iterrows(), sinkDict['__0__'].iterrows()):
-                for i in range(1, len(source[1])):
-                    self.assertEqual(source[1][i]*(-1), sink[1][i])
+            pd.DataFrame.equals(-forex, sinkDict)
+            # for source, sink in zip(sourceDict['forex'].iterrows(), sinkDict['__0__'].iterrows()):
+            #     for i in range(1, len(source[1])):
+            #         self.assertEqual(source[1][i]*(-1), sink[1][i])
         print("test successful")
