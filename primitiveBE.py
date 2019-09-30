@@ -17,7 +17,8 @@ def ADD(p):
         if type(a) and type(b) is pd.Series:
             p.arguments.data = pd.Series(a + b)
 
-    # Subtract(a, b, difference)
+
+# Subtract(a, b, difference)
 def SUBTRACT(p):
         a = p.arguments["a"].parent.arguments.data
         b = p.arguments["b"].parent.arguments.data
@@ -204,11 +205,6 @@ def STDEV(p):
         elif type(window) is int:
             p.arguments.data = a.std(axis=window)
 
-
-
-
-
-
 def MIN(p):
     # TODO: add exception for no series or dataframe object?
     a = p.arguments["series"].parent.arguments.data
@@ -294,7 +290,81 @@ def PUTCOLUMNS(p):
         raise Exception("Error appending columns to newDF, make sure indices align correctly")
 
 
-#def DELAY(p):
+def INTERVALMEAN(p):
+    a = p.arguments["series"].parent.arguments.data
+    win = p.arguments["window"]
+    if type(win) is 'datetime':
+        rolling = a.rolling(int, closed='right')
+    else:  #TODO ASSUMPTION HERE THAT IF NOT DATETIME, ITS AN INT
+        rolling = a.rolling(win)
+    if type(a) is pd.DataFrame:
+        p.arguments.data = pd.DataFrame(rolling.mean())
+    if type(a) is pd.Series:
+        p.arguments.data = pd.Series(rolling.mean())
+
+
+def INTERVALSTD(p):
+    a = p.arguments["series"].parent.arguments.data
+    win = p.arguments["window"]
+    if type(win) is 'datetime':
+        rolling = a.rolling(int, closed='right')
+    else:  #TODO ASSUMPTION HERE THAT IF NOT DATETIME, ITS AN INT
+        rolling = a.rolling(win)
+    if type(a) is pd.DataFrame:
+        p.arguments.data = pd.DataFrame(rolling.std())
+    if type(a) is pd.Series:
+        p.arguments.data = pd.Series(rolling.std())
+
+def INTERVALMIN(p):
+    a = p.arguments["series"].parent.arguments.data
+    win = p.arguments["window"]
+    if type(win) is 'datetime':
+        rolling = a.rolling(int, closed='right')
+    else:  #TODO ASSUMPTION HERE THAT IF NOT DATETIME, ITS AN INT
+        rolling = a.rolling(win)
+    if type(a) is pd.DataFrame:
+        p.arguments.data = pd.DataFrame(rolling.min())
+    if type(a) is pd.Series:
+        p.arguments.data = pd.Series(rolling.min())
+
+def INTERVALMAX(p):
+    a = p.arguments["series"].parent.arguments.data
+    win = p.arguments["window"]
+    if type(win) is 'datetime':
+        rolling = a.rolling(int, closed='right')
+    else:  #TODO ASSUMPTION HERE THAT IF NOT DATETIME, ITS AN INT
+        rolling = a.rolling(win)
+    if type(a) is pd.DataFrame:
+        p.arguments.data = pd.DataFrame(rolling.max())
+    if type(a) is pd.Series:
+        p.arguments.data = pd.Series(rolling.max())
+
+def INTERVALSUM(p):
+    a = p.arguments["series"].parent.arguments.data
+    win = p.arguments["window"]
+    if type(win) is 'datetime':
+        rolling = a.rolling(int, closed='right')
+    else:  #TODO ASSUMPTION HERE THAT IF NOT DATETIME, ITS AN INT
+        rolling = a.rolling(win)
+    if type(a) is pd.DataFrame:
+        p.arguments.data = pd.DataFrame(rolling.sum())
+    if type(a) is pd.Series:
+        p.arguments.data = pd.Series(rolling.sum())
+
+def INTERVALCOUNT(p):
+    a = p.arguments["series"].parent.arguments.data
+    win = p.arguments["window"]
+    if type(win) is 'datetime':
+        rolling = a.rolling(int, closed='right')
+    else:  #TODO ASSUMPTION HERE THAT IF NOT DATETIME, ITS AN INT
+        rolling = a.rolling(win)
+    if type(a) is pd.DataFrame:
+        p.arguments.data = pd.DataFrame(rolling.count())
+    if type(a) is pd.Series:
+        p.arguments.data = pd.Series(rolling.count())
+
+
+        #def DELAY(p):
 #    a = p.arguments["a"].parent.arguments.data
 #    if type(a) is pd.DataFrame:
 #        p.arguments.data = pd.DataFrame(a).shift()
