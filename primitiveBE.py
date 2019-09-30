@@ -178,33 +178,30 @@ def ADDTICKS(p):
 
 def STDEV(p):
     a = p.arguments["series"].parent.arguments.data
-    window = p.arguments["window"]   # tODO: what is purpose of 'axis'/'window' here??
-    a = a.std()
-    p.arguments.result = a
+    if type(a) is pd.DataFrame or pd.Series:
+        window = p.arguments['window']
+        p.arguments.data = a.rolling(window=window).std()
 
 
 def MIN(p):
-    a = p.arguments["a"].parent.arguments.data
-    if type(a) is pd.DataFrame:
-        p.arguments.data = pd.DataFrame(a).min()
-    if type(a) is pd.Series:
-        p.arguments.data = pd.Series(a).min()
+    a = p.arguments["series"].parent.arguments.data
+    if type(a) is pd.DataFrame or pd.Series:
+        window = p.arguments['window']
+        p.arguments.data = a.rolling(window=window).min()
 
 
 def MAX(p):
-    a = p.arguments["a"].parent.arguments.data
-    if type(a) is pd.DataFrame:
-        p.arguments.data = pd.DataFrame(a).max()
-    if type(a) is pd.Series:
-        p.arguments.data = pd.Series(a).max()
+    a = p.arguments["series"].parent.arguments.data
+    if type(a) is pd.DataFrame or pd.Series:
+        window = p.arguments['window']
+        p.arguments.data = a.rolling(window=window).max()
 
 
 def SUM(p):
-    a = p.arguments["a"].parent.arguments.data
-    if type(a) is pd.DataFrame:
-        p.arguments.data = pd.DataFrame(a).sum()
-    if type(a) is pd.Series:
-        p.arguments.data = pd.Series(a).sum()
+    a = p.arguments["series"].parent.arguments.data
+    if type(a) is pd.DataFrame or pd.Series:
+        window = p.arguments['window']
+        p.arguments.data = a.rolling(window=window).sum()
 
 
 def DELAY(p):
