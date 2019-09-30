@@ -294,7 +294,7 @@ def INTERVALMEAN(p):
     a = p.arguments["series"].parent.arguments.data
     win = p.arguments["window"]
     if type(win) is 'datetime':
-        rolling = a.rolling(int, closed='right')
+        rolling = a.rolling(win, closed='right')
     else:  #TODO ASSUMPTION HERE THAT IF NOT DATETIME, ITS AN INT
         rolling = a.rolling(win)
     if type(a) is pd.DataFrame:
@@ -307,7 +307,7 @@ def INTERVALSTD(p):
     a = p.arguments["series"].parent.arguments.data
     win = p.arguments["window"]
     if type(win) is 'datetime':
-        rolling = a.rolling(int, closed='right')
+        rolling = a.rolling(win, closed='right')
     else:  #TODO ASSUMPTION HERE THAT IF NOT DATETIME, ITS AN INT
         rolling = a.rolling(win)
     if type(a) is pd.DataFrame:
@@ -319,7 +319,7 @@ def INTERVALMIN(p):
     a = p.arguments["series"].parent.arguments.data
     win = p.arguments["window"]
     if type(win) is 'datetime':
-        rolling = a.rolling(int, closed='right')
+        rolling = a.rolling(win, closed='right')
     else:  #TODO ASSUMPTION HERE THAT IF NOT DATETIME, ITS AN INT
         rolling = a.rolling(win)
     if type(a) is pd.DataFrame:
@@ -331,7 +331,7 @@ def INTERVALMAX(p):
     a = p.arguments["series"].parent.arguments.data
     win = p.arguments["window"]
     if type(win) is 'datetime':
-        rolling = a.rolling(int, closed='right')
+        rolling = a.rolling(win, closed='right')
     else:  #TODO ASSUMPTION HERE THAT IF NOT DATETIME, ITS AN INT
         rolling = a.rolling(win)
     if type(a) is pd.DataFrame:
@@ -343,7 +343,7 @@ def INTERVALSUM(p):
     a = p.arguments["series"].parent.arguments.data
     win = p.arguments["window"]
     if type(win) is 'datetime':
-        rolling = a.rolling(int, closed='right')
+        rolling = a.rolling(win, closed='right')
     else:  #TODO ASSUMPTION HERE THAT IF NOT DATETIME, ITS AN INT
         rolling = a.rolling(win)
     if type(a) is pd.DataFrame:
@@ -355,7 +355,7 @@ def INTERVALCOUNT(p):
     a = p.arguments["series"].parent.arguments.data
     win = p.arguments["window"]
     if type(win) is 'datetime':
-        rolling = a.rolling(int, closed='right')
+        rolling = a.rolling(win, closed='right')
     else:  #TODO ASSUMPTION HERE THAT IF NOT DATETIME, ITS AN INT
         rolling = a.rolling(win)
     if type(a) is pd.DataFrame:
