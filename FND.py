@@ -427,23 +427,39 @@ def addTicks(series: Series, ticks, name: str=None) -> Series:
 
 @primitive
 def sma(series: Series, window: int, name: str=None) -> Series:
-    return Series(name, series)
+    if(window > 0):
+        return Series(name, series)
+    else:
+        raise Exception("window size cannot be zero")
 
 @primitive
-def stdev(series: Series, window=0, name: str=None) -> Series:
-    return Series(name, series)
+def stdev(series: Series, window: int=None, name: str=None) -> Series:
+    if(window > 0):
+        return Series(name, series)
+    else:
+        raise Exception("window size cannot be zero")
 
 @primitive
 def min(series: Series, window: int=None, name: str=None) -> Series:
-    return Series(name, series)
+    if(window > 0):
+        return Series(name, series)
+    else:
+        raise Exception
+
 
 @primitive
 def max(series: Series, window: int=None, name: str=None) -> Series:
-    return Series(name, series)
+    if(window > 0):
+        return Series(name, series)
+    else:
+        raise Exception("window size cannot be zero")
 
 @primitive
 def sum(series: Series, window: int=None, name: str=None) -> Series:
-    return Series(name, series)
+    if(window > 0):
+        return Series(name, series)
+    else:
+        raise Exception("window size cannot be zero")
 
 @primitive
 def delay(series: Series, samples: int, name: str=None) -> Series:

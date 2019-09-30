@@ -191,7 +191,7 @@ def ADDTICKS(p):
 def STDEV(p):
     #TODO: add exception for no series or dataframe object?
     a = p.arguments["series"].parent.arguments.data
-    if type(a) is pd.Series:
+     if type(a) is pd.Series:
         p.arguments.data = a.std()
     elif type(a) is pd.DataFrame:
         window = p.arguments['window']
@@ -206,30 +206,24 @@ def STDEV(p):
             p.arguments.data = a.std(axis=window)
 
 def MIN(p):
-    # TODO: add exception for no series or dataframe object?
     a = p.arguments["series"].parent.arguments.data
-    if type(a) is pd.DataFrame:
-        p.arguments.data = pd.DataFrame(a).min()
-    if type(a) is pd.Series:
-        p.arguments.data = pd.Series(a).min()
+    if type(a) is pd.DataFrame or pd.Series:
+        window = p.arguments['window']
+        p.arguments.data = a.rolling(window=window).min()
 
 
 def MAX(p):
-    # TODO: add exception for no series or dataframe object?
     a = p.arguments["series"].parent.arguments.data
-    if type(a) is pd.DataFrame:
-        p.arguments.data = pd.DataFrame(a).max()
-    if type(a) is pd.Series:
-        p.arguments.data = pd.Series(a).max()
+    if type(a) is pd.DataFrame or pd.Series:
+        window = p.arguments['window']
+        p.arguments.data = a.rolling(window=window).max()
 
 
 def SUM(p):
-    # TODO: add exception for no series or dataframe object?
     a = p.arguments["series"].parent.arguments.data
-    if type(a) is pd.DataFrame:
-        p.arguments.data = pd.DataFrame(a).sum()
-    if type(a) is pd.Series:
-        p.arguments.data = pd.Series(a).sum()
+    if type(a) is pd.DataFrame or pd.Series:
+        window = p.arguments['window']
+        p.arguments.data = a.rolling(window=window).sum()
 
 def DELAY(p):           # is 'shift()' in pandas.series lib okay for this??
     series = p.arguments["series"].parent.arguments.data
