@@ -37,7 +37,7 @@ class TestPrimitivesA(unittest.TestCase):
             sourceDict = {'forex': forex}
             add(seriesSource('forex'), seriesSource('forex'))
             sinkDict = piEval(n, sourceDict)
-            pd.DataFrame.equals(forex.add(forex), sinkDict)
+            self.assertIsNone(pd.testing.assert_frame_equal(forex.add(forex), sinkDict['__0__']))
             #for source, sink in zip(sourceDict['forex'].iterrows(), sinkDict['__0__'].iterrows()):
              #   for i in range(1, len(source[1])):
              #       self.assertEqual(source[1][i]*2, sink[1][i])
@@ -70,9 +70,10 @@ class TestPrimitivesA(unittest.TestCase):
             sourceDict = {'forex': forex}
             subtract(seriesSource('forex'), seriesSource('forex'))
             sinkDict = piEval(n, sourceDict)
-            for source, sink in zip(sourceDict['forex'].iterrows(), sinkDict['__0__'].iterrows()):
-                for i in range(1, len(source[1])):
-                    self.assertEqual(source[1][i]-source[1][i], sink[1][i])
+            self.assertIsNone(pd.testing.assert_frame_equal(forex.subtract(forex), sinkDict['__0__']))
+            # for source, sink in zip(sourceDict['forex'].iterrows(), sinkDict['__0__'].iterrows()):
+            #     for i in range(1, len(source[1])):
+            #         self.assertEqual(source[1][i]-source[1][i], sink[1][i])
         print("test successful")
 
     def test_MultiplyPrimitive(self):
@@ -102,7 +103,7 @@ class TestPrimitivesA(unittest.TestCase):
             sourceDict = {'forex': forex}
             multiply(seriesSource('forex'), seriesSource('forex'))
             sinkDict = piEval(n, sourceDict)
-            pd.DataFrame.equals(forex.subtract(forex), sinkDict)
+            self.assertIsNone(pd.testing.assert_frame_equal(forex.multiply(forex), sinkDict['__0__']))
             # for source, sink in zip(sourceDict['forex'].iterrows(), sinkDict['__0__'].iterrows()):
             #     for i in range(1, len(source[1])):
             #         self.assertEqual(source[1][i]*source[1][i], sink[1][i])
@@ -135,7 +136,7 @@ class TestPrimitivesA(unittest.TestCase):
             sourceDict = {'forex': forex}
             divide(seriesSource('forex'), seriesSource('forex'))
             sinkDict = piEval(n, sourceDict)
-            pd.DataFrame.equals(forex.divide(forex), sinkDict)
+            self.assertIsNone(pd.testing.assert_frame_equal(forex.divide(forex), sinkDict['__0__']))
             # for source, sink in zip(sourceDict['forex'].iterrows(), sinkDict['__0__'].iterrows()):
             #     for i in range(1, len(source[1])):
             #         self.assertEqual(source[1][i]/source[1][i], sink[1][i])
@@ -168,7 +169,7 @@ class TestPrimitivesA(unittest.TestCase):
             sourceDict = {'forex': forex}
             neg(seriesSource('forex'))
             sinkDict = piEval(n, sourceDict)
-            pd.DataFrame.equals(-forex, sinkDict)
+            self.assertIsNone(pd.testing.assert_frame_equal(-forex, sinkDict['__0__']))
             # for source, sink in zip(sourceDict['forex'].iterrows(), sinkDict['__0__'].iterrows()):
             #     for i in range(1, len(source[1])):
             #         self.assertEqual(source[1][i]*(-1), sink[1][i])
