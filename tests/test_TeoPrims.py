@@ -3,6 +3,7 @@ from FND import *
 from PandasBE import piEval
 import pandas as pd
 import numpy as np
+from datetime import datetime, time, timedelta
 
 def randomWalkSeries(initialValue=100, sigma=.002, start='2019-01-01', end='2019-01-31', freq='H'):
     dates = pd.date_range(start=start, end=end, freq=freq)
@@ -43,6 +44,26 @@ def randomWalkDataframe2(initialValue= -100, sigma=.002, start='2019-01-01', end
     for i in range(1, len(values)):
         values[i] = values[i - 1] + (values[i - 1] * norm[i] * sigma)
     return pd.DataFrame(values, index=dates)
+
+def dateStringtoDateTimeHISTORICAL(s):
+    result = pd.DataFrame(columns=list(s))
+    for index, row in s.iterrows():
+        date_string = row.get_values()[0] + "000"
+        date_object = datetime.strptime(date_string, "%Y%m%d %H%M%S%f")
+        result.set_value(index=index, col="DateTime", value=date_object)
+        #result.append({'DateTime': date_object, 'AskPrice1':})
+        hello = 1
+    return result
+
+def dateStringtoDateTimeFOREXRODO(s):
+    cols = ['DateTime', 'BidPrice1', 'BidPrice2', 'AskPrice1', 'AskPrice2', 'Zero']
+    result = pd.DataFrame(columns=cols)
+    for index, row in s.iterrows():
+        values = row.array
+        date_string = values[0]
+        date_object = datetime.strptime(date_string, "%Y-%m-%d %H:%M")
+        result.append({'DateTime': date_object, 'BidPrice1': values[1], 'BidPrice2': values[2], "AskPrice1": values[3], "AskPrice2": values[4], "Zero": values[5]}, ignore_index=True)
+    return result
 
 class testNetwork_ColumnMethods(unittest.TestCase):
 
@@ -685,8 +706,8 @@ class testNetwork_GreaterThan_LessThan_SMA(unittest.TestCase):
             forex = pd.read_csv("forex.csv")
             sourceDict = {'forex': forex}  # here series are loaded
             df = seriesSource('forex')
-            sma(df, window=10, name="test")
-            toComp = sourceDict['forex'].rolling(window=10).mean()
+            sma(df, window=5, name="test")
+            toComp = sourceDict['forex'].rolling(window=5, closed="right").mean()
             sinkDict = piEval(n, sourceDict)
             toComp2 = sinkDict['test']
             self.assertIsNone(pd.testing.assert_frame_equal(toComp, toComp2))
@@ -705,13 +726,26 @@ class testNetwork_GreaterThan_LessThan_SMA(unittest.TestCase):
 
 class testNetowrk_TimeWeightedMean_TimeWeightedSTD(unittest.TestCase):
 
-    def test_TimeWeightMean(self):
+    def test_TimeWeightMeanSeconds(self):
         with Network() as n:
-            forex = pd.read_csv('forex.csv')
+            forex = pd.read_csv('forex-mini.csv')
+            #forex2 = pd.read_csv('DAT_ASCII_EURUSD_T_201801.csv')
+            forex3 = dateStringtoDateTimeFOREXRODO(forex)
             sourceDict = {'forex':forex}
             df = seriesSource('forex')
             interval = (0, 2)
-            timeWeightMean(df, timewindow="2s", value_col="AskPrice1", time_col="DateTime", name="test")
+            timeW = time(second=2)
+            timeWeightMean(df, timewindow=timeW, name="test")
+            sinkDict = piEval(n, sourceDict)
+            n.report()
+
+    def test_TimeWeightMeanINT(self):
+        with Network() as n:
+            forex = pd.read_csv('forex.csv')
+            sourceDict = {'forex': forex}
+            df = seriesSource('forex')
+            interval = (0, 2)
+            timeWeightMean(df, timewindow=2, name="test")
             sinkDict = piEval(n, sourceDict)
             n.report()
 
@@ -724,5 +758,6 @@ class testNetowrk_TimeWeightedMean_TimeWeightedSTD(unittest.TestCase):
             timeWeightSTD(df, interval=interval, name="test")
             sinkDict = piEval(n, sourceDict)
             n.report()
+
 
 

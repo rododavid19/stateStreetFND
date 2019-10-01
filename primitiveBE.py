@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import FND
-import datetime
+from datetime import datetime, timedelta, time
 
 #TODO: FOR ALL add wether Series or DF. Then also check how data was passed??
 
@@ -289,44 +289,20 @@ def PUTCOLUMNS(p):
 
 
 #Time-Weighted Interval Operations
-#def TIMEWEIGHTMEAN(p):
-#    series = p.arguments["series"].parent.arguments.data
-#    columnNames = list(series)
-#    interval = p.arguments["interval"]
-#    result = pd.DataFrame(columns=columnNames)
-#    if type(interval[0]) is int and type(interval[1]) is int:
-#        result = series.rolling(window=(interval[1] - interval[0]))
-#        p.arguments.data = result
-#        return
-#    elif type(interval[0]) is datetime.timedelta and type(interval[1]) is datetime.timedelta:
-#        p.arguments.data = result
-#        return
-
-#TODO Make my own implementation
 def TIMEWEIGHTMEAN(p):
     s = p.arguments['series'].parent.arguments.data
-    value_col = p.arguments['value_col']
-    time_col = p.arguments['time_col']
-    new_col_name = value_col + ' Time Weighted Mean'
+    for row in s.itertuples():
+        hello = 1
+        hello = hello + 1
     timeWindow = p.arguments['timewindow']
-    fill_value = np.nan
+    if type(timeWindow) is int: #Rolling over Indices
+        if timeWindow > 0:
+            p.arguments.data = s.rolling(window=timeWindow, closed="right").mean()
+            return
+    elif type(timeWindow) is time:
+        p.arguments.data = s.rolling(window=timeWindow, min_periods=1,closed="right").mean()
+        return
 
-    for idx, row in s.iterrows():
-        # Filter for only values that are days_back for averaging.
-        days_back_fil = (s[time_col] < row[time_col]) & (s[time_col] >= row[time_col] + pd.Timedelta(timeWindow))
-        df = s[days_back_fil]
-
-        df['secs-back'] = (row[time_col] - df[time_col]) / np.timedelta64(1,'s')  # need to divide by np.timedelta day to get number back
-        df['weight'] = df[value_col] * df['secs-back']
-
-        try:
-            df['tw_avg'] = df['weight'].sum() / df['secs-back'].sum()
-            time_avg = df['tw_avg'].iloc[0]  # Get single value of the tw_avg
-            s.loc[idx, new_col_name] = time_avg
-        except ZeroDivisionError:
-            s.loc[idx, new_col_name] = fill_value
-
-    p.arguments.data = s
 
 
 
