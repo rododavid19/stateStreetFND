@@ -291,18 +291,66 @@ def PUTCOLUMNS(p):
 #Time-Weighted Interval Operations
 def TIMEWEIGHTMEAN(p):
     s = p.arguments['series'].parent.arguments.data
-    for row in s.itertuples():
-        hello = 1
-        hello = hello + 1
     timeWindow = p.arguments['timewindow']
-    if type(timeWindow) is int: #Rolling over Indices
-        if timeWindow > 0:
-            p.arguments.data = s.rolling(window=timeWindow, closed="right").mean()
-            return
-    elif type(timeWindow) is time:
-        p.arguments.data = s.rolling(window=timeWindow, min_periods=1,closed="right").mean()
+    if type(timeWindow) is float:
+        hello = 1
         return
-
+    elif type(timeWindow) is int: #Rolling over Indices
+        if timeWindow > 0:
+            p.arguments.data = s.rolling(window=timeWindow, closed="left").mean()
+            return
+    elif type(timeWindow) is str:
+        #figure out exact timewindow in ns
+        rollingWindowSize = pd.to_timedelta(timeWindow) / pd.to_timedelta(1)
+        result = s.copy()
+        #tempRes = result.drop(['DateTime', 'DurationOfPrice', 'DurationOfPrice_NS'], axis=1)
+        tempRes = result.drop(['DateTime', 'DurationOfPrice_NS'], axis=1)
+        for column in list(tempRes.columns):
+            tempRes[column] = tempRes[column] * result['DurationOfPrice_NS']
+        Iterator = result.itertuples()
+        for row in Iterator:
+            #DISREGARD FIRST VALUE
+            #next(Iterator)
+            #COUNT ROWS UNTIL ROLLINGWINDOWSIZE HAS BEEN MET
+            IteratorInner = result.itertuples()
+            for x in range(0,row[0]):
+                next(IteratorInner)
+            count = 0
+            timesummation = rollingWindowSize
+            currIndex = 0
+            while timesummation > float(0):
+                if currIndex == result.last_valid_index():
+                    break
+                for rowInner in IteratorInner:
+                    if np.isnan(rowInner[-1]):
+                        continue
+                    timesummation = timesummation - rowInner[-1]
+                    count = count + 1
+                    currIndex = currIndex + 1
+                    if timesummation <= float(0):
+                        break
+            currIndex = row[0]
+            averageHolder = {}
+            for column in list(tempRes.columns):
+                #TODO POTENTIALLY CHANGE THE RANGE
+                for x in range(currIndex+1, currIndex+count):
+                    #averageHolder[column] = averageHolder[column] + result[x:column]
+                    if not(column in averageHolder):
+                        averageHolder[column] = tempRes.iloc[x][column]
+                    else:
+                        averageHolder[column] = averageHolder[column] + tempRes.iloc[x][column]
+            #Divide prices by rollingWindowSize
+            for key in averageHolder.keys():
+                averageHolder[key] = averageHolder[key]/rollingWindowSize
+                #Update row in result
+                result.at[row[0]+1, key] = averageHolder[key]
+                hello = 1
+            hello = 1
+        hello = 1
+        return result
+    elif type(timeWindow) is datetime.timedelta:
+        hello = 1
+        return
 
 
 

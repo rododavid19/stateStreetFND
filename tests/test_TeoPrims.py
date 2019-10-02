@@ -56,13 +56,22 @@ def dateStringtoDateTimeHISTORICAL(s):
     return result
 
 def dateStringtoDateTimeFOREXRODO(s):
-    cols = ['DateTime', 'BidPrice1', 'BidPrice2', 'AskPrice1', 'AskPrice2', 'Zero']
-    result = pd.DataFrame(columns=cols)
-    for index, row in s.iterrows():
-        values = row.array
-        date_string = values[0]
-        date_object = datetime.strptime(date_string, "%Y-%m-%d %H:%M")
-        result.append({'DateTime': date_object, 'BidPrice1': values[1], 'BidPrice2': values[2], "AskPrice1": values[3], "AskPrice2": values[4], "Zero": values[5]}, ignore_index=True)
+    #cols = ['DateTime', 'BidPrice1', 'BidPrice2', 'AskPrice1', 'AskPrice2', 'Zero']
+    #result = pd.DataFrame(columns=cols)
+    # for index, row in s.iterrows():
+    #     values = row.array
+    #     date_string = values[0]
+    #     #date_object = datetime.strptime(date_string, "%Y-%m-%d %H:%M")
+    #     date_object = pd.to_datetime(date_string, format="%Y-%m-%d %H:%M")
+    #     result = result.append({'DateTime': date_object, 'BidPrice1': values[1], 'BidPrice2': values[2], "AskPrice1": values[3], "AskPrice2": values[4], "Zero": values[5]}, ignore_index=True)
+    #result = s.copy()
+    result = s.copy()
+    result['DateTime'] = pd.to_datetime(s['DateTime'], format="%Y-%m-%d %H:%M")
+    tempDuration = result[list(result.columns)[0]].diff()
+    tempDuration2 = tempDuration / pd.to_timedelta(1)
+    #result = result.assign(DurationOfPrice=tempDuration)
+    result = result.assign(DurationOfPrice_NS=tempDuration2)
+
     return result
 
 class testNetwork_ColumnMethods(unittest.TestCase):
@@ -726,15 +735,15 @@ class testNetwork_GreaterThan_LessThan_SMA(unittest.TestCase):
 
 class testNetowrk_TimeWeightedMean_TimeWeightedSTD(unittest.TestCase):
 
-    def test_TimeWeightMeanSeconds(self):
+    def test_TimeWeightMeanMinutes(self):
         with Network() as n:
-            forex = pd.read_csv('forex-mini.csv')
-            #forex2 = pd.read_csv('DAT_ASCII_EURUSD_T_201801.csv')
-            forex3 = dateStringtoDateTimeFOREXRODO(forex)
-            sourceDict = {'forex':forex}
+            forex = pd.read_csv('forex-mini-ez.csv')
+            formatted_DF = dateStringtoDateTimeFOREXRODO(forex)
+            #tempDurationDataframe = durationOfPrice(forex)
+            sourceDict = {'forex':formatted_DF}
             df = seriesSource('forex')
-            interval = (0, 2)
-            timeW = time(second=2)
+            rollerino = formatted_DF.rolling('4T', closed='left', on=list(formatted_DF.columns)[0]).mean()
+            timeW='4min'
             timeWeightMean(df, timewindow=timeW, name="test")
             sinkDict = piEval(n, sourceDict)
             n.report()
