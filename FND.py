@@ -502,7 +502,7 @@ def intervalCount(series: Series, window: int, name: str=None) -> Series:
 
 #TODO MAKE MY OWN IMPLEMENTATION
 @primitive
-def timeWeightMean(series : Series, timewindow=None, name: str=None):
+def timeWeightMean(series : Series, column: str, timewindow=None, name: str=None):
     return Series(name, series)
 
 @primitive

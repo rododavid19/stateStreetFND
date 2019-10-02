@@ -289,71 +289,136 @@ def PUTCOLUMNS(p):
 
 
 #Time-Weighted Interval Operations
+# def TIMEWEIGHTMEAN(p):
+#     s = p.arguments['series'].parent.arguments.data
+#     timeWindow = p.arguments['timewindow']
+#     if type(timeWindow) is float:
+#         hello = 1
+#         return
+#     elif type(timeWindow) is int: #Rolling over Indices
+#         if timeWindow > 0:
+#             p.arguments.data = s.rolling(window=timeWindow, closed="left").mean()
+#             return
+#     elif type(timeWindow) is str:
+#         #figure out exact timewindow in ns
+#         rollingWindowSize = pd.to_timedelta(timeWindow) / pd.to_timedelta(1)
+#         result = s.copy()
+#         #tempRes = result.drop(['DateTime', 'DurationOfPrice', 'DurationOfPrice_NS'], axis=1)
+#         tempRes = result.drop(['DateTime', 'DurationOfPrice_NS'], axis=1)
+#         for column in list(tempRes.columns):
+#             tempRes[column] = tempRes[column] * result['DurationOfPrice_NS']
+#         Iterator = result.itertuples()
+#         for row in Iterator:
+#             #DISREGARD FIRST VALUE
+#             #next(Iterator)
+#             #COUNT ROWS UNTIL ROLLINGWINDOWSIZE HAS BEEN MET
+#             IteratorInner = result.itertuples()
+#             for x in range(0,row[0]):
+#                 next(IteratorInner)
+#             count = 0
+#             timesummation = rollingWindowSize
+#             currIndex = 0
+#             while timesummation > float(0):
+#                 if currIndex == result.last_valid_index():
+#                     break
+#                 for rowInner in IteratorInner:
+#                     if np.isnan(rowInner[-1]):
+#                         continue
+#                     timesummation = timesummation - rowInner[-1]
+#                     count = count + 1
+#                     currIndex = currIndex + 1
+#                     if timesummation <= float(0):
+#                         break
+#             currIndex = row[0]
+#             averageHolder = {}
+#             for column in list(tempRes.columns):
+#                 #TODO POTENTIALLY CHANGE THE RANGE
+#                 for x in range(currIndex+1, currIndex+count):
+#                     #averageHolder[column] = averageHolder[column] + result[x:column]
+#                     if not(column in averageHolder):
+#                         averageHolder[column] = tempRes.iloc[x][column]
+#                     else:
+#                         averageHolder[column] = averageHolder[column] + tempRes.iloc[x][column]
+#             #Divide prices by rollingWindowSize
+#             for key in averageHolder.keys():
+#                 averageHolder[key] = averageHolder[key]/rollingWindowSize
+#                 #Update row in result
+#                 result.at[row[0]+1, key] = averageHolder[key]
+#                 hello = 1
+#             hello = 1
+#         hello = 1
+#         return result
+#     elif type(timeWindow) is datetime.timedelta:
+#         hello = 1
+#         return
+
+# def TIMEWEIGHTMEAN(p):
+#     #TODO PRELIMINARY FUNCTION ONLY TESTING STRING TIMEWINDOWS
+#     #NOTE - TIMEWEIGHT OF ONLY 1 COLUMN POSSIBLE WITH THIS ITERATION
+#     s = p.arguments['series'].parent.arguments.data
+#     targetCol = p.arguments['column']
+#     timeWindow = p.arguments['timewindow']
+#     tempRes = s.copy()
+#     for col in list(tempRes.columns):
+#         if col == 'DateTime' or col == 'DurationOfPrice_NS':
+#             continue
+#         tempRes[col] = tempRes[col] * s['DurationOfPrice_NS']
+#     result = tempRes.rolling(timeWindow, on=list(tempRes.columns)[0], closed='left').apply(rolling_TWM_1Column(s=tempRes, column=targetCol))
+
 def TIMEWEIGHTMEAN(p):
+    #TODO PRELIMINARY FUNCTION ONLY TESTING STRING TIMEWINDOWS
+    #NOTE - TIMEWEIGHT OF ONLY 1 COLUMN POSSIBLE WITH THIS ITERATION
     s = p.arguments['series'].parent.arguments.data
+    targetCol = p.arguments['column']
     timeWindow = p.arguments['timewindow']
-    if type(timeWindow) is float:
-        hello = 1
-        return
-    elif type(timeWindow) is int: #Rolling over Indices
-        if timeWindow > 0:
-            p.arguments.data = s.rolling(window=timeWindow, closed="left").mean()
-            return
-    elif type(timeWindow) is str:
-        #figure out exact timewindow in ns
-        rollingWindowSize = pd.to_timedelta(timeWindow) / pd.to_timedelta(1)
-        result = s.copy()
-        #tempRes = result.drop(['DateTime', 'DurationOfPrice', 'DurationOfPrice_NS'], axis=1)
-        tempRes = result.drop(['DateTime', 'DurationOfPrice_NS'], axis=1)
-        for column in list(tempRes.columns):
-            tempRes[column] = tempRes[column] * result['DurationOfPrice_NS']
-        Iterator = result.itertuples()
-        for row in Iterator:
-            #DISREGARD FIRST VALUE
-            #next(Iterator)
-            #COUNT ROWS UNTIL ROLLINGWINDOWSIZE HAS BEEN MET
-            IteratorInner = result.itertuples()
-            for x in range(0,row[0]):
-                next(IteratorInner)
-            count = 0
-            timesummation = rollingWindowSize
-            currIndex = 0
-            while timesummation > float(0):
-                if currIndex == result.last_valid_index():
-                    break
-                for rowInner in IteratorInner:
-                    if np.isnan(rowInner[-1]):
-                        continue
-                    timesummation = timesummation - rowInner[-1]
-                    count = count + 1
-                    currIndex = currIndex + 1
-                    if timesummation <= float(0):
-                        break
-            currIndex = row[0]
-            averageHolder = {}
-            for column in list(tempRes.columns):
-                #TODO POTENTIALLY CHANGE THE RANGE
-                for x in range(currIndex+1, currIndex+count):
-                    #averageHolder[column] = averageHolder[column] + result[x:column]
-                    if not(column in averageHolder):
-                        averageHolder[column] = tempRes.iloc[x][column]
-                    else:
-                        averageHolder[column] = averageHolder[column] + tempRes.iloc[x][column]
-            #Divide prices by rollingWindowSize
-            for key in averageHolder.keys():
-                averageHolder[key] = averageHolder[key]/rollingWindowSize
-                #Update row in result
-                result.at[row[0]+1, key] = averageHolder[key]
-                hello = 1
-            hello = 1
-        hello = 1
-        return result
-    elif type(timeWindow) is datetime.timedelta:
-        hello = 1
-        return
+    tempRes = s.copy()
+    for col in list(tempRes.columns):
+        if col == 'DateTime' or col == 'DurationOfPrice_NS':
+            continue
+        tempRes[col] = tempRes[col] * s['DurationOfPrice_NS']
+    result = tempRes.rolling(timeWindow, on=list(tempRes.columns)[0], closed='left').apply(rolling_TWM(s=tempRes))
 
 
 
 def TIMEWEIGHTSTD(p):
     series = p.arguments["series"].parent.arguments.data
     interval = p.arguments["interval"]
+
+
+#Time Weighted Average function to apply to rolling window
+def rolling_TWM(s):
+    columnDict = list(s.columns)
+    d = []
+    for col in columnDict:
+        if col == list(s.columns)[0] or col == list(s.columns)[1]:
+            continue
+        d.append(s[col].sum()/s['DurationOfPrice_NS'].sum())
+    toRet = pd.DataFrame(columns=s.columns)
+    count = 0
+    for col in columnDict:
+        if col == list(s.columns)[0] or col == list(s.columns)[-1]:
+            toRet[col] = s[col]
+            count = count + 1
+        else:
+            toRet[col] = d[count]
+    return
+
+#Time Weighted Average function to apply to rolling window
+def rolling_TWM_1Column(s, column):
+    d = []
+    d.append(s[column].sum()/s[list(s.columns)[-1]].sum())
+    return pd.series(d, index=[column])
+
+
+
+
+
+def dataframe_roll(df):
+    def my_fn(window_series):
+        # Note: you can do any kind of offset here
+        window_df = df[(df.index >= window_series.index[0]) & (df.index <= window_series.index[-1])]
+        return window_df["col1"] + window_df["col2"]
+    return my_fn
+
+
+#df["result"] = df["any_col"].rolling(24).apply(dataframe_roll(df), raw=False)

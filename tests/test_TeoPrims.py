@@ -744,7 +744,7 @@ class testNetowrk_TimeWeightedMean_TimeWeightedSTD(unittest.TestCase):
             df = seriesSource('forex')
             rollerino = formatted_DF.rolling('4T', closed='left', on=list(formatted_DF.columns)[0]).mean()
             timeW='4min'
-            timeWeightMean(df, timewindow=timeW, name="test")
+            timeWeightMean(df, timewindow=timeW, name="test", column='AskPrice1')
             sinkDict = piEval(n, sourceDict)
             n.report()
 
