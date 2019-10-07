@@ -40,6 +40,26 @@ def randomWalkSeries2(initialValue= -100, sigma=.002, start='2019-01-01', end='2
     values[0] = value
     for i in range(1, len(values)):
         values[i] = values[i - 1] + (values[i - 1] * norm[i] * sigma)
+    return pd.Series(values, index=dates)
+
+def randomWalkSeries3(initialValue=100, sigma=.002, start='2019-01-01', end='2019-01-31', freq='H'):
+    dates = pd.date_range(start=start, end=end, freq=freq)
+    values = np.zeros(len(dates))
+    norm = np.random.normal(size=len(dates))
+    value = initialValue
+    values[0] = value
+    for i in range(1, len(values)):
+        values[i] = values[i - 1] + (values[i - 1] * norm[i] * sigma)
+    return pd.DataFrame(values, index=dates)
+
+def randomWalkSeries4(initialValue= -100, sigma=.002, start='2019-01-01', end='2019-01-31', freq='H'):
+    dates = pd.date_range(start=start, end=end, freq=freq)
+    values = np.zeros(len(dates))
+    norm = np.random.normal(size=len(dates))
+    value = initialValue
+    values[0] = value
+    for i in range(1, len(values)):
+        values[i] = values[i - 1] + (values[i - 1] * norm[i] * sigma)
     return pd.DataFrame(values, index=dates)
 
 

@@ -36,7 +36,7 @@ def bitBucket(p):
 #TODO: Previously string field were local functions, however the reference is messed up and does not allow for isIstance() verification
 PRIMITIVE_MAP = {
 
-    "add":ADD,
+    "add": ADD,
     "subtract": SUBTRACT,
     "multiply": MULTIPLY,
     "divide": DIVIDE,
@@ -52,6 +52,8 @@ PRIMITIVE_MAP = {
     "notEqual": NE,
     "greaterThan": GT,
     "greaterOrEqual": GE,
+    "floor": FLOOR,
+    "ceiling": CEILING,
     "priceFloor": PRICEFLOOR,
     "priceCeiling": PRICECEILING,
     "addTicks": ADDTICKS,
@@ -64,6 +66,12 @@ PRIMITIVE_MAP = {
     "getColumns": GETCOLUMNS,
     "timeWeightMean": TIMEWEIGHTMEAN,
     "timeWeightSTD": TIMEWEIGHTSTD,
+    "intervalMean": INTERVALMEAN,
+    "intervalStdev": INTERVALSTD,
+    "intervalMin": INTERVALMIN,
+    "intervalMax": INTERVALMAX,
+    "intervalSum": INTERVALSUM,
+    "intervalCount": INTERVALCOUNT,
 
   #  SeriesSink: PandasImmediate.seriesSink,
    # DataFrameSink: PandasImmediate.dataFrameSink,
