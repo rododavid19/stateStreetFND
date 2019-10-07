@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import FND
+import datetime
 
 #TODO: FOR ALL add wether Series or DF. Then also check how data was passed??
 
@@ -293,7 +294,7 @@ def PUTCOLUMNS(p):
 def INTERVALMEAN(p):
     a = p.arguments["series"].parent.arguments.data
     win = p.arguments["window"]
-    if type(win) is 'datetime':
+    if type(win) is datetime:
         rolling = a.rolling(win, closed='right')
     else:  #TODO ASSUMPTION HERE THAT IF NOT DATETIME, ITS AN INT
         rolling = a.rolling(win)
@@ -306,7 +307,7 @@ def INTERVALMEAN(p):
 def INTERVALSTD(p):
     a = p.arguments["series"].parent.arguments.data
     win = p.arguments["window"]
-    if type(win) is 'datetime':
+    if type(win) is datetime:
         rolling = a.rolling(win, closed='right')
     else:  #TODO ASSUMPTION HERE THAT IF NOT DATETIME, ITS AN INT
         rolling = a.rolling(win)
@@ -318,7 +319,7 @@ def INTERVALSTD(p):
 def INTERVALMIN(p):
     a = p.arguments["series"].parent.arguments.data
     win = p.arguments["window"]
-    if type(win) is 'datetime':
+    if type(win) is datetime:
         rolling = a.rolling(win, closed='right')
     else:  #TODO ASSUMPTION HERE THAT IF NOT DATETIME, ITS AN INT
         rolling = a.rolling(win)
@@ -330,7 +331,7 @@ def INTERVALMIN(p):
 def INTERVALMAX(p):
     a = p.arguments["series"].parent.arguments.data
     win = p.arguments["window"]
-    if type(win) is 'datetime':
+    if type(win) is datetime:
         rolling = a.rolling(win, closed='right')
     else:  #TODO ASSUMPTION HERE THAT IF NOT DATETIME, ITS AN INT
         rolling = a.rolling(win)
@@ -342,7 +343,7 @@ def INTERVALMAX(p):
 def INTERVALSUM(p):
     a = p.arguments["series"].parent.arguments.data
     win = p.arguments["window"]
-    if type(win) is 'datetime':
+    if type(win) is datetime:
         rolling = a.rolling(win, closed='right')
     else:  #TODO ASSUMPTION HERE THAT IF NOT DATETIME, ITS AN INT
         rolling = a.rolling(win)
@@ -354,7 +355,7 @@ def INTERVALSUM(p):
 def INTERVALCOUNT(p):
     a = p.arguments["series"].parent.arguments.data
     win = p.arguments["window"]
-    if type(win) is 'datetime':
+    if type(win) is datetime:
         rolling = a.rolling(win, closed='right')
     else:  #TODO ASSUMPTION HERE THAT IF NOT DATETIME, ITS AN INT
         rolling = a.rolling(win)

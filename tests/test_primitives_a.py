@@ -130,7 +130,7 @@ class TestPrimitivesA(unittest.TestCase):
                 self.assertEqual(x/x, y)
         print("test successful")
 
-    def test_DividePrimitiveDFDeep(self):
+    def test_DividePrimitiveDFDeep(self): #TODO maybe a try catch here
         print("deep df testing primitive: divide...")
         with Network() as n:
             sourceDict = {'forex': forex}
