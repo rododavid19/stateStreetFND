@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import FND
+from pandas.core.window import _Rolling_and_Expanding
 from datetime import datetime, timedelta, time
 
 #TODO: FOR ALL add wether Series or DF. Then also check how data was passed??
@@ -192,7 +193,7 @@ def ADDTICKS(p):
 def STDEV(p):
     #TODO: add exception for no series or dataframe object?
     a = p.arguments["series"].parent.arguments.data
-     if type(a) is pd.Series:
+    if type(a) is pd.Series:
         p.arguments.data = a.std()
     elif type(a) is pd.DataFrame:
         window = p.arguments['window']
@@ -370,9 +371,9 @@ def TIMEWEIGHTMEAN(p):
         if col == 'DateTime' or col == 'DurationOfPrice_NS':
             continue
         tempRes[col] = tempRes[col] * s['DurationOfPrice_NS']
-    result = tempRes.rolling(timeWindow, on=list(tempRes.columns)[0], closed='left').apply(rolling_TWM(s=tempRes))
-
-
+    result = tempRes.rolling(timeWindow, on=list(tempRes.columns)[0], closed='right').weighted_average()
+    s['wavg'] = result
+    hello = 1
 
 def TIMEWEIGHTSTD(p):
     series = p.arguments["series"].parent.arguments.data
@@ -384,24 +385,26 @@ def rolling_TWM(s):
     columnDict = list(s.columns)
     d = []
     for col in columnDict:
-        if col == list(s.columns)[0] or col == list(s.columns)[1]:
+        if col == list(s.columns)[0] or col == list(s.columns)[-1]:
             continue
         d.append(s[col].sum()/s['DurationOfPrice_NS'].sum())
     toRet = pd.DataFrame(columns=s.columns)
-    count = 0
-    for col in columnDict:
-        if col == list(s.columns)[0] or col == list(s.columns)[-1]:
-            toRet[col] = s[col]
-            count = count + 1
-        else:
-            toRet[col] = d[count]
-    return
+#    count = 0
+#    for col in columnDict:
+#        if col == list(s.columns)[0] or col == list(s.columns)[-1]:
+#            toRet[col] = s[col]
+#            count = count + 1
+#        else:
+#            toRet[col] = d[count]
+    return toRet
 
 #Time Weighted Average function to apply to rolling window
-def rolling_TWM_1Column(s, column):
+def weighted_average(x):
     d = []
-    d.append(s[column].sum()/s[list(s.columns)[-1]].sum())
-    return pd.series(d, index=[column])
+    d.append(x['BidPrice1'].sum()/x['DurationOfPrice_NS'].sum())
+    toRet = pd.Series(d, index=['wavg'])
+    return toRet
+_Rolling_and_Expanding.weighted_average = weighted_average
 
 
 

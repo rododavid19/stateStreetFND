@@ -68,6 +68,8 @@ def dateStringtoDateTimeFOREXRODO(s):
     result = s.copy()
     result['DateTime'] = pd.to_datetime(s['DateTime'], format="%Y-%m-%d %H:%M")
     tempDuration = result[list(result.columns)[0]].diff()
+    #first element in temp duration should be equal to the second datetime index - the first date time index
+    tempDuration[0] = result.iloc[1][list(result.columns)[0]] - result.iloc[0][list(result.columns)[0]]
     tempDuration2 = tempDuration / pd.to_timedelta(1)
     #result = result.assign(DurationOfPrice=tempDuration)
     result = result.assign(DurationOfPrice_NS=tempDuration2)
@@ -737,13 +739,12 @@ class testNetowrk_TimeWeightedMean_TimeWeightedSTD(unittest.TestCase):
 
     def test_TimeWeightMeanMinutes(self):
         with Network() as n:
-            forex = pd.read_csv('forex-mini-ez.csv')
+            forex = pd.read_csv('forex-tiny-ez.csv')
             formatted_DF = dateStringtoDateTimeFOREXRODO(forex)
-            #tempDurationDataframe = durationOfPrice(forex)
             sourceDict = {'forex':formatted_DF}
             df = seriesSource('forex')
-            rollerino = formatted_DF.rolling('4T', closed='left', on=list(formatted_DF.columns)[0]).mean()
-            timeW='4min'
+            rollerino = formatted_DF.rolling('T', closed='left', on=list(formatted_DF.columns)[0]).mean()
+            timeW='2min'
             timeWeightMean(df, timewindow=timeW, name="test", column='AskPrice1')
             sinkDict = piEval(n, sourceDict)
             n.report()
