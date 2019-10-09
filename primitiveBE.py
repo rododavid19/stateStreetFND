@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import FND
+from datetime import datetime, date
 
 #TODO: FOR ALL add wether Series or DF. Then also check how data was passed??
 
@@ -40,7 +41,7 @@ def MULTIPLY(p):
 
     # Divide(a, b, quotient, remainder=None)
 def DIVIDE(p):
-        a = p.arguments["a"].parent.arguments.data
+        a = p.arguments["a"].parent.arguments.data #TODO do a try catch here in case of zeros
         b = p.arguments["b"].parent.arguments.data
 
         if type(a) and type(b) is pd.DataFrame:
@@ -191,7 +192,7 @@ def ADDTICKS(p):
 def STDEV(p):
     #TODO: add exception for no series or dataframe object?
     a = p.arguments["series"].parent.arguments.data
-     if type(a) is pd.Series:
+    if type(a) is pd.Series:
         p.arguments.data = a.std()
     elif type(a) is pd.DataFrame:
         window = p.arguments['window']
@@ -264,7 +265,6 @@ def GETCOLUMNS(p):
         return
 
 
-
 def PUTCOLUMNS(p):
     #TODO: Column dict contains column names and series objects to put into newdf, so what does df do?
     #TODO: Add check to make sure all series in colDict have same or compatible indices to newdf
@@ -287,7 +287,7 @@ def PUTCOLUMNS(p):
 def INTERVALMEAN(p):
     a = p.arguments["series"].parent.arguments.data
     win = p.arguments["window"]
-    if type(win) is 'datetime':
+    if type(win) is datetime:
         rolling = a.rolling(win, closed='right')
     else:  #TODO ASSUMPTION HERE THAT IF NOT DATETIME, ITS AN INT
         rolling = a.rolling(win)
@@ -300,7 +300,7 @@ def INTERVALMEAN(p):
 def INTERVALSTD(p):
     a = p.arguments["series"].parent.arguments.data
     win = p.arguments["window"]
-    if type(win) is 'datetime':
+    if type(win) is datetime:
         rolling = a.rolling(win, closed='right')
     else:  #TODO ASSUMPTION HERE THAT IF NOT DATETIME, ITS AN INT
         rolling = a.rolling(win)
@@ -312,7 +312,7 @@ def INTERVALSTD(p):
 def INTERVALMIN(p):
     a = p.arguments["series"].parent.arguments.data
     win = p.arguments["window"]
-    if type(win) is 'datetime':
+    if type(win) is datetime:
         rolling = a.rolling(win, closed='right')
     else:  #TODO ASSUMPTION HERE THAT IF NOT DATETIME, ITS AN INT
         rolling = a.rolling(win)
@@ -324,7 +324,7 @@ def INTERVALMIN(p):
 def INTERVALMAX(p):
     a = p.arguments["series"].parent.arguments.data
     win = p.arguments["window"]
-    if type(win) is 'datetime':
+    if type(win) is datetime:
         rolling = a.rolling(win, closed='right')
     else:  #TODO ASSUMPTION HERE THAT IF NOT DATETIME, ITS AN INT
         rolling = a.rolling(win)
@@ -336,7 +336,7 @@ def INTERVALMAX(p):
 def INTERVALSUM(p):
     a = p.arguments["series"].parent.arguments.data
     win = p.arguments["window"]
-    if type(win) is 'datetime':
+    if type(win) is datetime:
         rolling = a.rolling(win, closed='right')
     else:  #TODO ASSUMPTION HERE THAT IF NOT DATETIME, ITS AN INT
         rolling = a.rolling(win)
@@ -348,7 +348,7 @@ def INTERVALSUM(p):
 def INTERVALCOUNT(p):
     a = p.arguments["series"].parent.arguments.data
     win = p.arguments["window"]
-    if type(win) is 'datetime':
+    if type(win) is datetime:
         rolling = a.rolling(win, closed='right')
     else:  #TODO ASSUMPTION HERE THAT IF NOT DATETIME, ITS AN INT
         rolling = a.rolling(win)
