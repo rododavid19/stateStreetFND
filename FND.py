@@ -511,20 +511,13 @@ def intervalCount(series: Series, window: int, name: str=None) -> Series:
 # even though in almost all cases the state transition will have occurred outside of the window.
 # The time-weighted indicators also do not include the event that triggers the update, since its time-weight is 0.
 
-
-#@primitive
-#def timeWeightMean(series: Series, interval, minInterval=None, name: str=None) -> Series:
-#    return Series(name, series)
-
-#TODO MAKE MY OWN IMPLEMENTATION
 @primitive
-def timeWeightMean(series : Series, column: str, timewindow=None, name: str=None):
+def timeWeightMean(series: Series, timewindow=None, name: str=None) -> Series:
     return Series(name, series)
 
 @primitive
-def timeWeightSTD(series: Series, interval, minInterval=None, name: str=None) -> Series:
+def timeWeightSTD(series: Series,timewindow=None, name: str=None) -> Series:
     return Series(name, series)
-
 
 ## DataFrame Operations ##
 

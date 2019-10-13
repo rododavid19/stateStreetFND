@@ -3,7 +3,7 @@ from FND import *
 from PandasBE import piEval
 import pandas as pd
 import numpy as np
-from datetime import datetime, time, timedelta
+from datetime import datetime, time, date, timedelta
 
 def randomWalkSeries(initialValue=100, sigma=.002, start='2019-01-01', end='2019-01-31', freq='H'):
     dates = pd.date_range(start=start, end=end, freq=freq)
@@ -44,37 +44,6 @@ def randomWalkDataframe2(initialValue= -100, sigma=.002, start='2019-01-01', end
     for i in range(1, len(values)):
         values[i] = values[i - 1] + (values[i - 1] * norm[i] * sigma)
     return pd.DataFrame(values, index=dates)
-
-def dateStringtoDateTimeHISTORICAL(s):
-    result = pd.DataFrame(columns=list(s))
-    for index, row in s.iterrows():
-        date_string = row.get_values()[0] + "000"
-        date_object = datetime.strptime(date_string, "%Y%m%d %H%M%S%f")
-        result.set_value(index=index, col="DateTime", value=date_object)
-        #result.append({'DateTime': date_object, 'AskPrice1':})
-        hello = 1
-    return result
-
-def dateStringtoDateTimeFOREXRODO(s):
-    #cols = ['DateTime', 'BidPrice1', 'BidPrice2', 'AskPrice1', 'AskPrice2', 'Zero']
-    #result = pd.DataFrame(columns=cols)
-    # for index, row in s.iterrows():
-    #     values = row.array
-    #     date_string = values[0]
-    #     #date_object = datetime.strptime(date_string, "%Y-%m-%d %H:%M")
-    #     date_object = pd.to_datetime(date_string, format="%Y-%m-%d %H:%M")
-    #     result = result.append({'DateTime': date_object, 'BidPrice1': values[1], 'BidPrice2': values[2], "AskPrice1": values[3], "AskPrice2": values[4], "Zero": values[5]}, ignore_index=True)
-    #result = s.copy()
-    result = s.copy()
-    result['DateTime'] = pd.to_datetime(s['DateTime'], format="%Y-%m-%d %H:%M")
-    tempDuration = result[list(result.columns)[0]].diff()
-    #first element in temp duration should be equal to the second datetime index - the first date time index
-    tempDuration[0] = result.iloc[1][list(result.columns)[0]] - result.iloc[0][list(result.columns)[0]]
-    tempDuration2 = tempDuration / pd.to_timedelta(1)
-    #result = result.assign(DurationOfPrice=tempDuration)
-    result = result.assign(DurationOfPrice_NS=tempDuration2)
-
-    return result
 
 class testNetwork_ColumnMethods(unittest.TestCase):
 
@@ -737,15 +706,43 @@ class testNetwork_GreaterThan_LessThan_SMA(unittest.TestCase):
 
 class testNetowrk_TimeWeightedMean_TimeWeightedSTD(unittest.TestCase):
 
-    def test_TimeWeightMeanMinutes(self):
+    def test_TimeWeightMeanTINY(self):
         with Network() as n:
             forex = pd.read_csv('forex-tiny-ez.csv')
-            formatted_DF = dateStringtoDateTimeFOREXRODO(forex)
-            sourceDict = {'forex':formatted_DF}
+            sourceDict = {'forex': forex}
             df = seriesSource('forex')
-            rollerino = formatted_DF.rolling('T', closed='left', on=list(formatted_DF.columns)[0]).mean()
+            timeW = 120.0
+            timeWeightMean(df, timewindow=timeW, name="test")
+            sinkDict = piEval(n, sourceDict)
+            n.report()
+
+    def test_TimeWeightMeanFloatMinutes(self):
+        with Network() as n:
+            forex = pd.read_csv('forex.csv')
+            sourceDict = {'forex':forex}
+            df = seriesSource('forex')
+            timeW=120.0
+            timeWeightMean(df, timewindow=timeW, name="test")
+            sinkDict = piEval(n, sourceDict)
+            n.report()
+
+    def test_TimeWeightMeanStringMinutes(self):
+        with Network() as n:
+            forex = pd.read_csv('forex.csv')
+            sourceDict = {'forex':forex}
+            df = seriesSource('forex')
             timeW='2min'
-            timeWeightMean(df, timewindow=timeW, name="test", column='AskPrice1')
+            timeWeightMean(df, timewindow=timeW, name="test")
+            sinkDict = piEval(n, sourceDict)
+            n.report()
+
+    def test_TimeWeightMeanDateTimeMinutes(self):
+        with Network() as n:
+            forex = pd.read_csv('forex.csv')
+            sourceDict = {'forex':forex}
+            df = seriesSource('forex')
+            timeW=timedelta(minutes=2)
+            timeWeightMean(df, timewindow=timeW, name="test")
             sinkDict = piEval(n, sourceDict)
             n.report()
 
@@ -754,18 +751,58 @@ class testNetowrk_TimeWeightedMean_TimeWeightedSTD(unittest.TestCase):
             forex = pd.read_csv('forex.csv')
             sourceDict = {'forex': forex}
             df = seriesSource('forex')
-            interval = (0, 2)
-            timeWeightMean(df, timewindow=2, name="test")
+            timeW = 2
+            timeWeightMean(df, timewindow=timeW, name="test")
             sinkDict = piEval(n, sourceDict)
             n.report()
 
-    def test_TimeWeightSTD(self):
+    def test_TimeWeightSTDTINY(self):
+        with Network() as n:
+            forex = pd.read_csv('forex-tiny-ez.csv')
+            sourceDict = {'forex': forex}
+            df = seriesSource('forex')
+            timeW = 120.0
+            timeWeightSTD(df, timewindow=timeW, name="test")
+            sinkDict = piEval(n, sourceDict)
+            n.report()
+
+    def test_TimeWeightSTDFloatMinutes(self):
         with Network() as n:
             forex = pd.read_csv('forex.csv')
             sourceDict = {'forex': forex}
             df = seriesSource('forex')
-            interval = (0, 2)
-            timeWeightSTD(df, interval=interval, name="test")
+            timeW = 120.0
+            timeWeightSTD(df, timewindow=timeW, name="test")
+            sinkDict = piEval(n, sourceDict)
+            n.report()
+
+    def test_TimeWeightSTDStringMinutes(self):
+        with Network() as n:
+            forex = pd.read_csv('forex.csv')
+            sourceDict = {'forex': forex}
+            df = seriesSource('forex')
+            timeW = '2min'
+            timeWeightSTD(df, timewindow=timeW, name="test")
+            sinkDict = piEval(n, sourceDict)
+            n.report()
+
+    def test_TimeWeightSTDDateTimeMinutes(self):
+        with Network() as n:
+            forex = pd.read_csv('forex.csv')
+            sourceDict = {'forex': forex}
+            df = seriesSource('forex')
+            timeW = timedelta(minutes=2)
+            timeWeightSTD(df, timewindow=timeW, name="test")
+            sinkDict = piEval(n, sourceDict)
+            n.report()
+
+    def test_TimeWeightSTDINT(self):
+        with Network() as n:
+            forex = pd.read_csv('forex.csv')
+            sourceDict = {'forex': forex}
+            df = seriesSource('forex')
+            timeW = 2
+            timeWeightSTD(df, timewindow=timeW, name="test")
             sinkDict = piEval(n, sourceDict)
             n.report()
 
