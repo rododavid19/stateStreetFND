@@ -8,6 +8,7 @@ import inspect
 
 ## %matplotlib inline              TODO: weird translate from jupter to .py
 import functools
+from primitiveBE import *
 
 
 # A tutorial on Python wrappers is at https://realpython.com/primer-on-python-decorators/.
@@ -262,6 +263,8 @@ class Series():
 
 
 
+
+
 class DataFrame():
 
     def __init__(self, name, dfDict):
@@ -322,9 +325,6 @@ class Module():
 
 
 # Define our primitives and modules
-
-from primitiveBE import *
-
 
 @primitive
 def seriesSource(name: str=None, consistentWith=None) -> Series:
@@ -462,11 +462,9 @@ def sum(series: Series, window: int=None, name: str=None) -> Series:
         raise Exception("window size must be greater than zero")
 
 @primitive
-def delay(series: Series, window: int=None, name: str=None) -> Series:
-    if(window > 0):
-        return Series(name, series)
-    else:
-        raise Exception("window size must be greater than zero")
+def delay(series: Series, samples: int, name: str=None) -> Series:
+    return Series(name, series)
+
 
 ## Exponentially-Weighted Operations ##
 @primitive
@@ -525,11 +523,11 @@ def timeWeightedStdev(series: Series, window: int, name: str=None) -> Series:
 ## DataFrame Operations ##
 
 @primitive
-def getColumns(series: Series, window: int, name: str=None) -> Series:
+def getColumns(series: Series, colNames, name: str=None) -> Series:
     return Series(name, series)
 
 @primitive
-def putColumns(series: Series, window: int, name: str=None) -> Series:
+def putColumns(series: Series, columnDict : dict, newDf: Series, name: str=None) -> Series:
     return Series(name, series)
 
 
