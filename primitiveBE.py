@@ -42,7 +42,7 @@ def MULTIPLY(p):
 
     # Divide(a, b, quotient, remainder=None)
 def DIVIDE(p):
-        a = p.arguments["a"].parent.arguments.data
+        a = p.arguments["a"].parent.arguments.data #TODO do a try catch here in case of zeros
         b = p.arguments["b"].parent.arguments.data
 
         if type(a) and type(b) is pd.DataFrame:
@@ -426,7 +426,7 @@ def dateStringtoDateTimeFOREXRODO(s):
 def INTERVALMEAN(p):
     a = p.arguments["series"].parent.arguments.data
     win = p.arguments["window"]
-    if type(win) is 'datetime':
+    if type(win) is datetime:
         rolling = a.rolling(win, closed='right')
     else:  #TODO ASSUMPTION HERE THAT IF NOT DATETIME, ITS AN INT
         rolling = a.rolling(win)
@@ -439,7 +439,7 @@ def INTERVALMEAN(p):
 def INTERVALSTD(p):
     a = p.arguments["series"].parent.arguments.data
     win = p.arguments["window"]
-    if type(win) is 'datetime':
+    if type(win) is datetime:
         rolling = a.rolling(win, closed='right')
     else:  #TODO ASSUMPTION HERE THAT IF NOT DATETIME, ITS AN INT
         rolling = a.rolling(win)
@@ -451,7 +451,7 @@ def INTERVALSTD(p):
 def INTERVALMIN(p):
     a = p.arguments["series"].parent.arguments.data
     win = p.arguments["window"]
-    if type(win) is 'datetime':
+    if type(win) is datetime:
         rolling = a.rolling(win, closed='right')
     else:  #TODO ASSUMPTION HERE THAT IF NOT DATETIME, ITS AN INT
         rolling = a.rolling(win)
@@ -463,7 +463,7 @@ def INTERVALMIN(p):
 def INTERVALMAX(p):
     a = p.arguments["series"].parent.arguments.data
     win = p.arguments["window"]
-    if type(win) is 'datetime':
+    if type(win) is datetime:
         rolling = a.rolling(win, closed='right')
     else:  #TODO ASSUMPTION HERE THAT IF NOT DATETIME, ITS AN INT
         rolling = a.rolling(win)
@@ -475,7 +475,7 @@ def INTERVALMAX(p):
 def INTERVALSUM(p):
     a = p.arguments["series"].parent.arguments.data
     win = p.arguments["window"]
-    if type(win) is 'datetime':
+    if type(win) is datetime:
         rolling = a.rolling(win, closed='right')
     else:  #TODO ASSUMPTION HERE THAT IF NOT DATETIME, ITS AN INT
         rolling = a.rolling(win)
@@ -487,7 +487,7 @@ def INTERVALSUM(p):
 def INTERVALCOUNT(p):
     a = p.arguments["series"].parent.arguments.data
     win = p.arguments["window"]
-    if type(win) is 'datetime':
+    if type(win) is datetime:
         rolling = a.rolling(win, closed='right')
     else:  #TODO ASSUMPTION HERE THAT IF NOT DATETIME, ITS AN INT
         rolling = a.rolling(win)
