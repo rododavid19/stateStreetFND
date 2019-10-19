@@ -37,7 +37,7 @@ def market_execute_intraday(self, order, pbid, pask, pcreated, dtcoc):
         if order.isbuy():
             price = pask #price at dtcoc
             print('Market Buy Order')
-            print('Wait till ',bt.num2date(order.timedelay), ' to buy')
+            print('Wait till ', bt.num2date(order.timedelay), ' to buy')
             self._execute(order, ago=0, price=price, dtcoc=dtcoc) #execute method
         else:
             price = pbid

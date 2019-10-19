@@ -312,7 +312,7 @@ def TIMEWEIGHTMEAN(p):
             if col == columnList[0] or col == columnList[-1]:
                 continue
             tempRes[col] = tempRes[col] * tempRes[columnList[-1]]
-        result = tempRes.rolling(timeWindow, on=list(tempRes.columns)[0], closed='right').weighted_average(columnList=columnList)
+        result = tempRes.rolling(timeWindow, on=list(tempRes.columns)[0], closed='left').weighted_average(columnList=columnList)
         columnList2 = columnList
         columnList2.remove(columnList[-1])
         tempRes2 = pd.DataFrame(columns=columnList2)
@@ -355,7 +355,7 @@ def TIMEWEIGHTSTD(p):
             if col == columnList[0] or col == columnList[-1]:
                 continue
             tempRes[col] = tempRes[col] * tempRes[columnList[-1]]
-        result = tempRes.rolling(timeWindow, on=list(tempRes.columns)[0], closed='right').weighted_STD(
+        result = tempRes.rolling(timeWindow, on=list(tempRes.columns)[0], closed='left').weighted_STD(
             columnList=columnList)
         columnList2 = columnList
         columnList2.remove(columnList[-1])
