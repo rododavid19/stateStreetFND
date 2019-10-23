@@ -433,8 +433,12 @@ def INTERVALMEAN(p):
     win = p.arguments["window"]
     if type(win) is datetime:
         rolling = a.rolling(win, closed='right')
-    else:  #TODO ASSUMPTION HERE THAT IF NOT DATETIME, ITS AN INT
-        rolling = a.rolling(win)
+    elif type(win) is float:
+        secs = timedelta(seconds=win)
+        rolling = a.rolling(secs)
+    elif type(win) is int:
+        secs = timedelta(seconds=win)
+        rolling = a.rolling(secs)
     if type(a) is pd.DataFrame:
         p.arguments.data = pd.DataFrame(rolling.mean())
     if type(a) is pd.Series:
@@ -446,8 +450,12 @@ def INTERVALSTD(p):
     win = p.arguments["window"]
     if type(win) is datetime:
         rolling = a.rolling(win, closed='right')
-    else:  #TODO ASSUMPTION HERE THAT IF NOT DATETIME, ITS AN INT
-        rolling = a.rolling(win)
+    elif type(win) is float:
+        secs = timedelta(seconds=win)
+        rolling = a.rolling(secs)
+    elif type(win) is int:
+        secs = timedelta(seconds=win)
+        rolling = a.rolling(secs)
     if type(a) is pd.DataFrame:
         p.arguments.data = pd.DataFrame(rolling.std())
     if type(a) is pd.Series:
@@ -458,8 +466,12 @@ def INTERVALMIN(p):
     win = p.arguments["window"]
     if type(win) is datetime:
         rolling = a.rolling(win, closed='right')
-    else:  #TODO ASSUMPTION HERE THAT IF NOT DATETIME, ITS AN INT
-        rolling = a.rolling(win)
+    elif type(win) is float:
+        secs = timedelta(seconds=win)
+        rolling = a.rolling(secs)
+    elif type(win) is int:
+        secs = timedelta(seconds=win)
+        rolling = a.rolling(secs)
     if type(a) is pd.DataFrame:
         p.arguments.data = pd.DataFrame(rolling.min())
     if type(a) is pd.Series:
@@ -470,8 +482,12 @@ def INTERVALMAX(p):
     win = p.arguments["window"]
     if type(win) is datetime:
         rolling = a.rolling(win, closed='right')
-    else:  #TODO ASSUMPTION HERE THAT IF NOT DATETIME, ITS AN INT
-        rolling = a.rolling(win)
+    elif type(win) is float:
+        secs = timedelta(seconds=win)
+        rolling = a.rolling(secs)
+    elif type(win) is int:
+        secs = timedelta(seconds=win)
+        rolling = a.rolling(secs)
     if type(a) is pd.DataFrame:
         p.arguments.data = pd.DataFrame(rolling.max())
     if type(a) is pd.Series:
@@ -482,8 +498,12 @@ def INTERVALSUM(p):
     win = p.arguments["window"]
     if type(win) is datetime:
         rolling = a.rolling(win, closed='right')
-    else:  #TODO ASSUMPTION HERE THAT IF NOT DATETIME, ITS AN INT
-        rolling = a.rolling(win)
+    elif type(win) is float:
+        secs = timedelta(seconds=win)
+        rolling = a.rolling(secs)
+    elif type(win) is int:
+        secs = timedelta(seconds=win)
+        rolling = a.rolling(secs)
     if type(a) is pd.DataFrame:
         p.arguments.data = pd.DataFrame(rolling.sum())
     if type(a) is pd.Series:
@@ -494,8 +514,12 @@ def INTERVALCOUNT(p):
     win = p.arguments["window"]
     if type(win) is datetime:
         rolling = a.rolling(win, closed='right')
-    else:  #TODO ASSUMPTION HERE THAT IF NOT DATETIME, ITS AN INT
-        rolling = a.rolling(win)
+    elif type(win) is float:
+        secs = timedelta(seconds=win)
+        rolling = a.rolling(secs)
+    elif type(win) is int:
+        secs = timedelta(seconds=win)
+        rolling = a.rolling(secs)
     if type(a) is pd.DataFrame:
         p.arguments.data = pd.DataFrame(rolling.count())
     if type(a) is pd.Series:
