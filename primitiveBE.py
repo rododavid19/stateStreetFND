@@ -268,16 +268,21 @@ def GETCOLUMNS(p):
 def PUTCOLUMNS(p):
     #TODO: Column dict contains column names and series objects to put into newdf, so what does df do?
     datafr = p.arguments["series"].parent.arguments.data
-    coldict = dict(p.arguments["columnDict"])
+    colNames = p.arguments["colNames"]
     newdf = p.arguments["newDf"].parent.arguments.data
+    if not(isinstance(newdf, pd.DataFrame) or isinstance(datafr, pd.DataFrame)):
+        raise Exception('newDf & datafr must be Dataframe objects')
+    colDict = {}
+    for col in colNames:
+        colDict[col] = datafr[col]
+    if not(all(k in list(datafr) for k in colNames)):
+        raise Exception('Error colDict contains columns not found in the input dataframe')
     currentColumns = list(newdf)
-    if not(set(currentColumns).isdisjoint(coldict.keys())):
+    if not(set(currentColumns).isdisjoint(colDict.keys())):
         raise Exception('Error colDict cannot contain any columns already in newDf')
-    if not(isinstance(newdf,pd.DataFrame)):
-        raise Exception('newDf must be a Dataframe object')
     try:
-        for key in coldict.keys():
-            newdf[key] = coldict[key]
+        for key in colDict.keys():
+            newdf[key] = colDict[key]
         p.arguments.data = newdf
     except:
         raise Exception("Error appending columns to newDF, make sure indices align correctly")

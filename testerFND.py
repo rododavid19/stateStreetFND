@@ -74,7 +74,7 @@ with Network() as n:
   #  a = -a
  #   a += a
     macd(seriesSource('fake'))
-
+    add()
 
     add(seriesSource('fake'), seriesSource('fake') )
    # macd(seriesSource('fake'))

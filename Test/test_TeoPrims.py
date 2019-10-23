@@ -122,8 +122,8 @@ class testNetwork_ColumnMethods(unittest.TestCase):
             sourceDict = {'forex': forex, 'forex2': forex2}
             df = seriesSource('forex')
             newDf = seriesSource('forex2')
-            columnDict = {'AskPrice2' : forex['AskPrice2'], 'BidPrice2': forex['BidPrice2'], 'Zero':forex['Zero']}
             columnDictTest = {'DateTime': forex['DateTime'], 'AskPrice1':forex['AskPrice1'], 'BidPrice1': forex['BidPrice1'],'AskPrice2' : forex['AskPrice2'], 'BidPrice2': forex['BidPrice2'], 'Zero':forex['Zero']}
+            columnDict = ['AskPrice2', 'BidPrice2', 'Zero']
             putColumns(df, columnDict, newDf, name='test')
             toComp = pd.DataFrame(columns=list(forex2))
             for key in columnDictTest.keys():
@@ -140,7 +140,7 @@ class testNetwork_ColumnMethods(unittest.TestCase):
             sourceDict = {'forex': forex, 'fake': randomWalkSeries()}
             df = seriesSource('forex')
             newDf = seriesSource('fake')
-            columnDict = {'AskPrice2' : forex['AskPrice2'], 'BidPrice2': forex['BidPrice2'], 'Zero':forex['Zero']}
+            columnDict = ['AskPrice2', 'BidPrice2', 'Zero']
             putColumns(df, columnDict, newDf)
             self.assertRaises(Exception, piEval, n, sourceDict)
 
@@ -168,7 +168,7 @@ class testNetwork_ColumnMethods(unittest.TestCase):
             sourceDict = {'forex': forex, 'forex2': forex2}
             df = seriesSource('forex')
             newDf = seriesSource('forex2')
-            columnDict = {'Zero': forex['Zero']}
+            columnDict = ['Zero']
             putColumns(df, columnDict, newDf)
             self.assertRaises(Exception, piEval, n, sourceDict)
 

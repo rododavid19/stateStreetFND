@@ -480,27 +480,27 @@ def ema(series: Series, span: int, name: str=None) -> Series:
 # They do not consider anything that happened outside of the time window.
 
 @primitive
-def intervalMean(series: Series, window: int, name: str=None) -> Series:
+def intervalMean(series: Series, window=None, name: str=None) -> Series:
     return Series(name, series)
 
 @primitive
-def intervalStdev(series: Series, window: int, name: str=None) -> Series:
+def intervalStdev(series: Series, window=None, name: str=None) -> Series:
     return Series(name, series)
 
 @primitive
-def intervalMin(series: Series, window: int, name: str=None) -> Series:
+def intervalMin(series: Series, window=None, name: str=None) -> Series:
     return Series(name, series)
 
 @primitive
-def intervalMax(series: Series, window: int, name: str=None) -> Series:
+def intervalMax(series: Series, window=None, name: str=None) -> Series:
     return Series(name, series)
 
 @primitive
-def intervalSum(series: Series, window: int, name: str=None) -> Series:
+def intervalSum(series: Series, window=None, name: str=None) -> Series:
     return Series(name, series)
 
 @primitive
-def intervalCount(series: Series, window: int, name: str=None) -> Series:
+def intervalCount(series: Series, window=None, name: str=None) -> Series:
     return Series(name, series)
 
 ## Time-Weighted Interval Operations ##
@@ -525,7 +525,7 @@ def getColumns(series: Series, colNames, name: str=None) -> Series:
     return Series(name, series)
 
 @primitive
-def putColumns(series: Series, columnDict : dict, newDf: Series, name: str=None) -> Series:
+def putColumns(series: Series, colNames, newDf: Series, name: str=None) -> Series:
     return Series(name, series)
 
 
