@@ -480,27 +480,27 @@ def ema(series: Series, span: int, name: str=None) -> Series:
 # They do not consider anything that happened outside of the time window.
 
 @primitive
-def intervalMean(series: Series, window: int, name: str=None) -> Series:
+def intervalMean(series: Series, window=None, name: str=None) -> Series:
     return Series(name, series)
 
 @primitive
-def intervalStdev(series: Series, window: int, name: str=None) -> Series:
+def intervalStdev(series: Series, window=None, name: str=None) -> Series:
     return Series(name, series)
 
 @primitive
-def intervalMin(series: Series, window: int, name: str=None) -> Series:
+def intervalMin(series: Series, window=None, name: str=None) -> Series:
     return Series(name, series)
 
 @primitive
-def intervalMax(series: Series, window: int, name: str=None) -> Series:
+def intervalMax(series: Series, window=None, name: str=None) -> Series:
     return Series(name, series)
 
 @primitive
-def intervalSum(series: Series, window: int, name: str=None) -> Series:
+def intervalSum(series: Series, window=None, name: str=None) -> Series:
     return Series(name, series)
 
 @primitive
-def intervalCount(series: Series, window: int, name: str=None) -> Series:
+def intervalCount(series: Series, window=None, name: str=None) -> Series:
     return Series(name, series)
 
 ## Time-Weighted Interval Operations ##
@@ -510,15 +510,13 @@ def intervalCount(series: Series, window: int, name: str=None) -> Series:
 # even though in almost all cases the state transition will have occurred outside of the window.
 # The time-weighted indicators also do not include the event that triggers the update, since its time-weight is 0.
 
-
 @primitive
-def timeWeightedMean(series: Series, window: int, name: str=None) -> Series:
+def timeWeightMean(series: Series, timewindow=None, name: str=None) -> Series:
     return Series(name, series)
 
 @primitive
-def timeWeightedStdev(series: Series, window: int, name: str=None) -> Series:
+def timeWeightSTD(series: Series,timewindow=None, name: str=None) -> Series:
     return Series(name, series)
-
 
 ## DataFrame Operations ##
 
@@ -527,7 +525,7 @@ def getColumns(series: Series, colNames, name: str=None) -> Series:
     return Series(name, series)
 
 @primitive
-def putColumns(series: Series, columnDict : dict, newDf: Series, name: str=None) -> Series:
+def putColumns(series: Series, colNames, newDf: Series, name: str=None) -> Series:
     return Series(name, series)
 
 

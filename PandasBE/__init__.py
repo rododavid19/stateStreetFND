@@ -5,6 +5,7 @@ from FND import *
 
 
 
+
     # SeriesSink(series)
     #
     # Sink the data into the object.
@@ -64,6 +65,8 @@ PRIMITIVE_MAP = {
     "delay": DELAY,
     "putColumns": PUTCOLUMNS,
     "getColumns": GETCOLUMNS,
+    "timeWeightMean": TIMEWEIGHTMEAN,
+    "timeWeightSTD": TIMEWEIGHTSTD,
     "intervalMean": INTERVALMEAN,
     "intervalStdev": INTERVALSTD,
     "intervalMin": INTERVALMIN,

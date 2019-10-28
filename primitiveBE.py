@@ -1,7 +1,8 @@
 import pandas as pd
 import numpy as np
 import FND
-from datetime import datetime, timedelta
+from pandas.core.window import _Rolling_and_Expanding
+from datetime import datetime, timedelta, time
 
 #TODO: FOR ALL add wether Series or DF. Then also check how data was passed??
 
@@ -186,7 +187,7 @@ def ADDTICKS(p):
    a = p.arguments["a"].parent.data
    b = p.arguments["b"].parent.data
    result = pd.Series.gt(a, b)
-   p.arguments.result = result
+   p.arguments.data = result
 
 
 def STDEV(p):
@@ -264,26 +265,169 @@ def GETCOLUMNS(p):
         p.arguments.data = result
         return
 
-
 def PUTCOLUMNS(p):
     #TODO: Column dict contains column names and series objects to put into newdf, so what does df do?
-    #TODO: Add check to make sure all series in colDict have same or compatible indices to newdf
     datafr = p.arguments["series"].parent.arguments.data
-    coldict = dict(p.arguments["columnDict"])
+    colNames = p.arguments["colNames"]
     newdf = p.arguments["newDf"].parent.arguments.data
+    if not(isinstance(newdf, pd.DataFrame) or isinstance(datafr, pd.DataFrame)):
+        raise Exception('newDf & datafr must be Dataframe objects')
+    colDict = {}
+    for col in colNames:
+        colDict[col] = datafr[col]
+    if not(all(k in list(datafr) for k in colNames)):
+        raise Exception('Error colDict contains columns not found in the input dataframe')
     currentColumns = list(newdf)
-    if not(set(currentColumns).isdisjoint(coldict.keys())):
+    if not(set(currentColumns).isdisjoint(colDict.keys())):
         raise Exception('Error colDict cannot contain any columns already in newDf')
-    if not(isinstance(newdf,pd.DataFrame)):
-        raise Exception('newDf must be a Dataframe object')
     try:
-        for key in coldict.keys():
-            newdf[key] = coldict[key]
+        for key in colDict.keys():
+            newdf[key] = colDict[key]
         p.arguments.data = newdf
     except:
         raise Exception("Error appending columns to newDF, make sure indices align correctly")
 
+def TIMEWEIGHTMEAN(p):
+    s = p.arguments['series'].parent.arguments.data
+    timeWindow = p.arguments['timewindow']
+    if not(type(timeWindow) is int or type(timeWindow) is str or type(timeWindow) is timedelta or type(timeWindow) is float):
+        raise Exception('Error TimeWindow must either be an int(for windows using numerical index) or a str or datetime object(for windows on a datetime index) or a float(indicating the number of seconds in timewindow)')
+    tempRes = s.copy()
+    #Case 1: timeWindow is an int, index on regular index
+    if type(timeWindow) is int:
+        tempRes['DurationOfPrice_Int'] = 1
+        columnList = list(tempRes.columns)
+        #TODO NOTE: PANDAS DOES NOT ALLOW FOR ANYTHING OTHER THAN BOTH CLOSED FOR INT WINDOWS
+        result = tempRes.rolling(timeWindow).weighted_average(columnList=columnList)
+        columnList2 = columnList
+        columnList2.remove(columnList[-1])
+        tempRes2 = pd.DataFrame(columns=columnList2)
+        tempRes2[columnList[0]] = s[columnList[0]]
+        for col in list(result.columns):
+            tempRes2[col] = result[col]
+        p.arguments.data = tempRes2
+        return
+    #Case 2: either a string, float or timeDelta object needs to be indexed over dateTime column
+    else:
+        if type(timeWindow) is float:
+            timeWindow = timedelta(seconds=timeWindow)
+        tempRes = dateStringtoDateTimeFOREXRODO(tempRes)
+        columnList = list(tempRes.columns)
+        for col in list(tempRes.columns):
+            if col == columnList[0] or col == columnList[-1]:
+                continue
+            tempRes[col] = tempRes[col] * tempRes[columnList[-1]]
+        result = tempRes.rolling(timeWindow, on=list(tempRes.columns)[0], closed='left').weighted_average(columnList=columnList)
+        columnList2 = columnList
+        columnList2.remove(columnList[-1])
+        tempRes2 = pd.DataFrame(columns=columnList2)
+        tempRes2[columnList[0]] = s[columnList[0]]
+        for col in list(result.columns):
+            tempRes2[col] = result[col]
+        p.arguments.data = tempRes2
 
+def TIMEWEIGHTSTD(p):
+    s = p.arguments['series'].parent.arguments.data
+    timeWindow = p.arguments['timewindow']
+    if not (type(timeWindow) is int or type(timeWindow) is str or type(timeWindow) is timedelta or type(
+            timeWindow) is float):
+        raise Exception(
+            'Error TimeWindow must either be an int(for windows using numerical index) or a str or datetime object(for windows on a datetime index) or a float(indicating the number of seconds in timewindow)')
+    tempRes = s.copy()
+    # Case 1: timeWindow is an int, index on regular index
+    if type(timeWindow) is int:
+        if timeWindow == 1:
+            raise Exception('STD is undefined for a window of 1')
+        tempRes['DurationOfPrice_Int'] = 1
+        columnList = list(tempRes.columns)
+        # TODO NOTE: PANDAS DOES NOT ALLOW FOR ANYTHING OTHER THAN BOTH CLOSED FOR INT WINDOWS
+        result = tempRes.rolling(timeWindow).weighted_STD(columnList=columnList)
+        columnList2 = columnList
+        columnList2.remove(columnList[-1])
+        tempRes2 = pd.DataFrame(columns=columnList2)
+        tempRes2[columnList[0]] = s[columnList[0]]
+        for col in list(result.columns):
+            tempRes2[col] = result[col]
+        p.arguments.data = tempRes2
+        return
+        # Case 2: either a string, float or timeDelta object needs to be indexed over dateTime column
+    else:
+        if type(timeWindow) is float:
+            timeWindow = timedelta(seconds=timeWindow)
+        tempRes = dateStringtoDateTimeFOREXRODO(tempRes)
+        columnList = list(tempRes.columns)
+        for col in list(tempRes.columns):
+            if col == columnList[0] or col == columnList[-1]:
+                continue
+            tempRes[col] = tempRes[col] * tempRes[columnList[-1]]
+        result = tempRes.rolling(timeWindow, on=list(tempRes.columns)[0], closed='left').weighted_STD(
+            columnList=columnList)
+        columnList2 = columnList
+        columnList2.remove(columnList[-1])
+        tempRes2 = pd.DataFrame(columns=columnList2)
+        tempRes2[columnList[0]] = s[columnList[0]]
+        for col in list(result.columns):
+            tempRes2[col] = result[col]
+        p.arguments.data = tempRes2
+
+#Time Weighted Average function to apply to rolling window
+#TODO ALTER STRING TO DATETIME FUNCTION BASED ON FINALIZED INPUT DATA SOURCE
+#TODO RIGHT NOW STRING TO DATETIME IS FOR RODO SUPPLIED FOREX.CSV
+def weighted_average(x, columnList):
+    d = []
+    tempL = columnList.copy()
+    for col in columnList:
+        if col == columnList[0] or col == columnList[-1]:
+            d.append(x[col])
+            continue
+        d.append(x[col].sum()/x[columnList[-1]].sum())
+    tempL.remove(tempL[0])
+    tempL.remove(tempL[-1])
+    toRet = pd.DataFrame(columns=tempL)
+    for i in range(len(d)):
+        if i == 0 or i == len(d) - 1:
+            continue
+        toRet[columnList[i]] = d[i]
+    return toRet
+_Rolling_and_Expanding.weighted_average = weighted_average
+
+#Time Weighted Standard Deviation function to apply to rolling window
+def weighted_STD(x, columnList):
+    d = []
+    tempL = columnList.copy()
+    for col in columnList:
+        if col == columnList[0] or col == columnList[-1]:
+            d.append(x[col])
+            continue
+        d.append(x[col].std()/x[columnList[-1]].sum())
+    tempL.remove(tempL[0])
+    tempL.remove(tempL[-1])
+    toRet = pd.DataFrame(columns=tempL)
+    for i in range(len(d)):
+        if i == 0 or i == len(d) - 1:
+            continue
+        toRet[columnList[i]] = d[i]
+    return toRet
+_Rolling_and_Expanding.weighted_STD = weighted_STD
+
+def dateStringtoDateTimeHISTORICAL(s):
+    result = pd.DataFrame(columns=list(s))
+    for index, row in s.iterrows():
+        date_string = row.get_values()[0] + "000"
+        date_object = datetime.strptime(date_string, "%Y%m%d %H%M%S%f")
+        result.set_value(index=index, col="DateTime", value=date_object)
+    return result
+
+def dateStringtoDateTimeFOREXRODO(s):
+    result = s.copy()
+    result['DateTime'] = pd.to_datetime(s['DateTime'], format="%Y-%m-%d %H:%M")
+    tempDuration = result[list(result.columns)[0]].diff()
+    tempDuration[0] = result.iloc[1][list(result.columns)[0]] - result.iloc[0][list(result.columns)[0]]
+    tempDuration2 = tempDuration / pd.to_timedelta(1)
+    result = result.assign(DurationOfPrice_NS=tempDuration2)
+    return result
+
+#df["result"] = df["any_col"].rolling(24).apply(dataframe_roll(df), raw=False)
 def INTERVALMEAN(p):
     a = p.arguments["series"].parent.arguments.data
     win = p.arguments["window"]
