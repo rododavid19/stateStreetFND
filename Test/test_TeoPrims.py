@@ -716,6 +716,16 @@ class testNetowrk_TimeWeightedMean_TimeWeightedSTD(unittest.TestCase):
             sinkDict = piEval(n, sourceDict)
             n.report()
 
+    def test_TimeWeightMeanTINY_6Min(self):
+        with Network() as n:
+            forex = pd.read_csv('forex-tiny-ez.csv')
+            sourceDict = {'forex': forex}
+            df = seriesSource('forex')
+            timeW = 360
+            timeWeightMean(df, timewindow=timeW, name="test")
+            sinkDict = piEval(n, sourceDict)
+            n.report()
+
     def test_TimeWeightMeanFloatMinutes(self):
         with Network() as n:
             forex = pd.read_csv('forex.csv')
@@ -741,7 +751,7 @@ class testNetowrk_TimeWeightedMean_TimeWeightedSTD(unittest.TestCase):
             forex = pd.read_csv('forex.csv')
             sourceDict = {'forex':forex}
             df = seriesSource('forex')
-            timeW=timedelta(minutes=2)
+            timeW=timedelta(minutes=5)
             timeWeightMean(df, timewindow=timeW, name="test")
             sinkDict = piEval(n, sourceDict)
             n.report()
@@ -761,7 +771,7 @@ class testNetowrk_TimeWeightedMean_TimeWeightedSTD(unittest.TestCase):
             forex = pd.read_csv('forex-tiny-ez.csv')
             sourceDict = {'forex': forex}
             df = seriesSource('forex')
-            timeW = 120.0
+            timeW = 360
             timeWeightSTD(df, timewindow=timeW, name="test")
             sinkDict = piEval(n, sourceDict)
             n.report()

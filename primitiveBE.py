@@ -291,40 +291,45 @@ def TIMEWEIGHTMEAN(p):
     s = p.arguments['series'].parent.arguments.data
     timeWindow = p.arguments['timewindow']
     if not(type(timeWindow) is int or type(timeWindow) is str or type(timeWindow) is timedelta or type(timeWindow) is float):
-        raise Exception('Error TimeWindow must either be an int(for windows using numerical index) or a str or datetime object(for windows on a datetime index) or a float(indicating the number of seconds in timewindow)')
+        raise Exception('Error TimeWindow must either be an int or float(for integer or float representations of seconds) or datetime object')
     tempRes = s.copy()
     #Case 1: timeWindow is an int, index on regular index
-    if type(timeWindow) is int:
-        tempRes['DurationOfPrice_Int'] = 1
-        columnList = list(tempRes.columns)
-        #TODO NOTE: PANDAS DOES NOT ALLOW FOR ANYTHING OTHER THAN BOTH CLOSED FOR INT WINDOWS
-        result = tempRes.rolling(timeWindow).weighted_average(columnList=columnList)
-        columnList2 = columnList
-        columnList2.remove(columnList[-1])
-        tempRes2 = pd.DataFrame(columns=columnList2)
-        tempRes2[columnList[0]] = s[columnList[0]]
-        for col in list(result.columns):
-            tempRes2[col] = result[col]
-        p.arguments.data = tempRes2
-        return
+    # if type(timeWindow) is int:
+    #     tempRes['DurationOfPrice_Int'] = 1
+    #     columnList = list(tempRes.columns)
+    #     #TODO NOTE: PANDAS DOES NOT ALLOW FOR ANYTHING OTHER THAN BOTH CLOSED FOR INT WINDOWS
+    #     result = tempRes.rolling(timeWindow).weighted_average(columnList=columnList)
+    #     columnList2 = columnList
+    #     columnList2.remove(columnList[-1])
+    #     tempRes2 = pd.DataFrame(columns=columnList2)
+    #     tempRes2[columnList[0]] = s[columnList[0]]
+    #     for col in list(result.columns):
+    #         tempRes2[col] = result[col]
+    #     p.arguments.data = tempRes2
+    #     return
     #Case 2: either a string, float or timeDelta object needs to be indexed over dateTime column
-    else:
-        if type(timeWindow) is float:
-            timeWindow = timedelta(seconds=timeWindow)
-        tempRes = dateStringtoDateTimeFOREXRODO(tempRes)
-        columnList = list(tempRes.columns)
-        for col in list(tempRes.columns):
-            if col == columnList[0] or col == columnList[-1]:
-                continue
-            tempRes[col] = tempRes[col] * tempRes[columnList[-1]]
-        result = tempRes.rolling(timeWindow, on=list(tempRes.columns)[0], closed='left').weighted_average(columnList=columnList)
-        columnList2 = columnList
-        columnList2.remove(columnList[-1])
-        tempRes2 = pd.DataFrame(columns=columnList2)
-        tempRes2[columnList[0]] = s[columnList[0]]
-        for col in list(result.columns):
-            tempRes2[col] = result[col]
-        p.arguments.data = tempRes2
+    #else:
+    if type(timeWindow) is float or type(timeWindow) is int:
+        timeWindow = timedelta(seconds=timeWindow)
+    tempRes = dateStringtoDateTimeFOREXRODO(tempRes)
+    columnList = list(tempRes.columns)
+    for col in list(tempRes.columns):
+        if col == columnList[0] or col == columnList[-1]:
+            continue
+        tempRes[col] = tempRes[col] * tempRes[columnList[-1]]
+    #tempRes = time_Weight_NAN_Filler(timeWindow, tempRes)
+    result = tempRes.rolling(timeWindow, on=list(tempRes.columns)[0], closed='left').weighted_average(columnList=columnList)
+    result = result.assign(DurationOfPrice_NS=tempRes["DurationOfPrice_NS"])
+    result = time_Weight_NAN_Filler(timeWindow, result)
+    columnList2 = columnList
+    columnList2.remove(columnList[-1])
+    tempRes2 = pd.DataFrame(columns=columnList2)
+    tempRes2[columnList[0]] = s[columnList[0]]
+    for col in list(result.columns):
+        if col == list(result.columns)[-1]:
+            continue
+        tempRes2[col] = result[col]
+    p.arguments.data = tempRes2
 
 def TIMEWEIGHTSTD(p):
     s = p.arguments['series'].parent.arguments.data
@@ -332,43 +337,46 @@ def TIMEWEIGHTSTD(p):
     if not (type(timeWindow) is int or type(timeWindow) is str or type(timeWindow) is timedelta or type(
             timeWindow) is float):
         raise Exception(
-            'Error TimeWindow must either be an int(for windows using numerical index) or a str or datetime object(for windows on a datetime index) or a float(indicating the number of seconds in timewindow)')
+            'Error TimeWindow must either be an int or float(for integer or float representations of seconds) or datetime object')
     tempRes = s.copy()
     # Case 1: timeWindow is an int, index on regular index
-    if type(timeWindow) is int:
-        if timeWindow == 1:
-            raise Exception('STD is undefined for a window of 1')
-        tempRes['DurationOfPrice_Int'] = 1
-        columnList = list(tempRes.columns)
-        # TODO NOTE: PANDAS DOES NOT ALLOW FOR ANYTHING OTHER THAN BOTH CLOSED FOR INT WINDOWS
-        result = tempRes.rolling(timeWindow).weighted_STD(columnList=columnList)
-        columnList2 = columnList
-        columnList2.remove(columnList[-1])
-        tempRes2 = pd.DataFrame(columns=columnList2)
-        tempRes2[columnList[0]] = s[columnList[0]]
-        for col in list(result.columns):
-            tempRes2[col] = result[col]
-        p.arguments.data = tempRes2
-        return
-        # Case 2: either a string, float or timeDelta object needs to be indexed over dateTime column
-    else:
-        if type(timeWindow) is float:
-            timeWindow = timedelta(seconds=timeWindow)
-        tempRes = dateStringtoDateTimeFOREXRODO(tempRes)
-        columnList = list(tempRes.columns)
-        for col in list(tempRes.columns):
-            if col == columnList[0] or col == columnList[-1]:
-                continue
-            tempRes[col] = tempRes[col] * tempRes[columnList[-1]]
-        result = tempRes.rolling(timeWindow, on=list(tempRes.columns)[0], closed='left').weighted_STD(
-            columnList=columnList)
-        columnList2 = columnList
-        columnList2.remove(columnList[-1])
-        tempRes2 = pd.DataFrame(columns=columnList2)
-        tempRes2[columnList[0]] = s[columnList[0]]
-        for col in list(result.columns):
-            tempRes2[col] = result[col]
-        p.arguments.data = tempRes2
+    # if type(timeWindow) is int:
+    #     if timeWindow == 1:
+    #         raise Exception('STD is undefined for a window of 1')
+    #     tempRes['DurationOfPrice_Int'] = 1
+    #     columnList = list(tempRes.columns)
+    #     # TODO NOTE: PANDAS DOES NOT ALLOW FOR ANYTHING OTHER THAN BOTH CLOSED FOR INT WINDOWS
+    #     result = tempRes.rolling(timeWindow).weighted_STD(columnList=columnList)
+    #     columnList2 = columnList
+    #     columnList2.remove(columnList[-1])
+    #     tempRes2 = pd.DataFrame(columns=columnList2)
+    #     tempRes2[columnList[0]] = s[columnList[0]]
+    #     for col in list(result.columns):
+    #         tempRes2[col] = result[col]
+    #     p.arguments.data = tempRes2
+    #     return
+    #     # Case 2: either a string, float, int or timeDelta object needs to be indexed over dateTime column
+    # else:
+    if type(timeWindow) is float or type(timeWindow) is int:
+        timeWindow = timedelta(seconds=timeWindow)
+    tempRes = dateStringtoDateTimeFOREXRODO(tempRes)
+    columnList = list(tempRes.columns)
+    for col in list(tempRes.columns):
+        if col == columnList[0] or col == columnList[-1]:
+            continue
+        tempRes[col] = tempRes[col] * tempRes[columnList[-1]]
+    result = tempRes.rolling(timeWindow, on=list(tempRes.columns)[0], closed='left').weighted_STD(columnList=columnList)
+    result = result.assign(DurationOfPrice_NS=tempRes["DurationOfPrice_NS"])
+    result = time_Weight_NAN_Filler(timeWindow, result)
+    columnList2 = columnList
+    columnList2.remove(columnList[-1])
+    tempRes2 = pd.DataFrame(columns=columnList2)
+    tempRes2[columnList[0]] = s[columnList[0]]
+    for col in list(result.columns):
+        if col == list(result.columns)[-1]:
+            continue
+        tempRes2[col] = result[col]
+    p.arguments.data = tempRes2
 
 #Time Weighted Average function to apply to rolling window
 #TODO ALTER STRING TO DATETIME FUNCTION BASED ON FINALIZED INPUT DATA SOURCE
@@ -409,6 +417,19 @@ def weighted_STD(x, columnList):
         toRet[columnList[i]] = d[i]
     return toRet
 _Rolling_and_Expanding.weighted_STD = weighted_STD
+
+def time_Weight_NAN_Filler(timewindow, s):
+    elapsedTime = 0
+    #timeWindow must be timeDelta object at this point
+    windowNanoSeconds = timewindow.seconds * 1000000000
+    for index, row in s.iterrows():
+        if elapsedTime >= windowNanoSeconds:
+            break
+        elapsedTime += row.get_values()[-1]
+        for col in list(s):
+            s.set_value(index=index, col=col, value=np.nan)
+    return s
+
 
 def dateStringtoDateTimeHISTORICAL(s):
     result = pd.DataFrame(columns=list(s))
