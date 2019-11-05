@@ -8,16 +8,18 @@ import (
 // operator overloading
 
 var SOURCE_TYPES  = [2]string{"seriesSource", "dataFrame"}
+
 // Sink Type
 
 
 // Node a single node that composes the tree
 type Node struct {
-	name string
+	name string  // TODO: change this to type_name
 	primitive Primitive
 	module Module
 	isPrimitive bool
 	children []Node
+	data int
 
 }
 
@@ -99,6 +101,7 @@ func (g *Network) String() string {
 }
 
 
+
 // AddNode adds a node to the graph
 func (g *Network) AddNode(n *Node) {
 	g.lock.Lock()
@@ -126,7 +129,6 @@ func ( n *Network) Init( ) {
 type Series struct{
 	name string
 	isType string
-	//  :(   Operator Overload
 }
 
 func (s Series) init( name string){
@@ -135,12 +137,6 @@ func (s Series) init( name string){
 }
 
 
-
-
-
-func networkSingleton () {
-	// ? Still slightly unclear as to what's going on here
-}
 
 type DataFrame struct{
 	// init
@@ -182,9 +178,39 @@ func (n *Network) pushModule( module *Node, primitives *[]Node ){
 
 // ### Source Operators ###
 
-func seriesSource(name string ) Series{
+func seriesSource(name string ) {
 	// addNode, this will be shared by everyone
-	return Series{name, "seriesSource"}
+	//defer barrier.Done()
+
+	sourceDict := map[string]string{
+		"eur/usd": "EUR CASH USD IDEALPRO",
+	}
+
+	message := []byte(sourceDict[name] )  // specify contract details, max period,
+	_, err_ = conn.Write(message)
+
+
+	// receive message from server
+	//buffer := make([]byte, 512)
+	//data, _, _ := conn.ReadFromUDP(buffer)
+
+
+	//fmt.Println("UDP Server : ", addr)
+	//  hotData <- string(buffer[:n])
+	//fmt.Println("Received from UDP server : ", string(buffer[:data]) + " error code: " )
+
+
+	for{
+		buffer := make([]byte, 512)
+		data, _, _ := conn.ReadFromUDP(buffer)
+		if data > 0{ }
+		data_s := string(buffer[:])
+		// TODO: make dataframe and dist. in that format?
+		//fmt.Println("RECIEVED", data_s, " at time ", 	time.Now())
+		composer.Write(data_s)
+		//composer <- data_s,  TODO: old version, one-to-one
+	}
+
 }
 
 
@@ -278,9 +304,9 @@ func (n *Network) greaterThan(a Series, span int, optionalName string){
 
 // Fixed-Size Rolling Windows //
 
-func (n *Network) SMA(a Series, window int, optionalName string){
+func (n *Network) SMA( window int, optionalName string){
 
-	prim := Node{name:"sma", isPrimitive:true, primitive:Primitive{argument_a:a, isType:a.isType, name:optionalName, window:window}}
+	prim := Node{name:"sma", isPrimitive:true, primitive:Primitive{ name:optionalName, window:window}}
 	n.pushPrimitive(&prim)
 }
 
@@ -367,13 +393,6 @@ func (n *Network) timeWeightedSTDEV(a Series, window int, optionalName string){
 
 
 
-
-
-
-
-
-
-
 // Modules //
 func (n *Network) MACD(a Series, optionalName string){
 
@@ -382,7 +401,6 @@ func (n *Network) MACD(a Series, optionalName string){
 		// TODO: cache if many sources are created. IE. ask Bishop how many sources are usually used.
 		n.sources = append(n.sources, a.name)
 	}
-
 
 	module := Node{name:"MACD", isPrimitive:false, module:Module{argument_a:a, isType:a.isType, name:optionalName, shortSpan:12, longSpan:22, signalSpan:9}}
 	primitives := make([]Node, 0)
@@ -396,7 +414,6 @@ func (n *Network) MACD(a Series, optionalName string){
 }
 
 
-
 func contains( target string ,sources []string) bool {
 
 	for _, curr := range sources{
@@ -405,14 +422,10 @@ func contains( target string ,sources []string) bool {
 			return true
 		}
 
-
 	}
 
 	return false
 }
-
-
-
 
 
 
