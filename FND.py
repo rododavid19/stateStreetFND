@@ -540,6 +540,33 @@ def macd(series: Series, shortSpan: int=12, longSpan: int=22, signalSpan: int=9,
     histogram = delta - signal
     return dataFrame({'delta':delta, 'signal':signal, 'histogram': histogram}, name='df')
 
+@module
+def simple_2SMA_Strategy(series: Series, shortWindow: int=None, longWindow: int=None, name: str=None) -> DataFrame:
+    sma_short = sma(series, shortWindow, name='short')
+    sma_long = sma(series, longWindow, name='long')
+    sellOrder = greaterThan(sma_short, sma_long, name='sellOrder')
+    buyOrder = lessThan(sma_short, sma_long, name='buyOrder')
+    noOrder = equal(sellOrder, buyOrder, name='noOrder')
+    #if sma_short < sma_long  -> Buy
+    #else if sma_short > sma_long -> Sell
+    #else (sma_short = sma_long) -> Do nothing
+    return dataFrame({'sellOrder': sellOrder, 'buyOrder': buyOrder, 'noOrder': noOrder}, name='df')
+@module
+def simple_3SMA_Strategy(series: Series, shortestWindow: int=None, shortWindow: int=None, longWindow: int=None, name: str=None) -> DataFrame:
+    sma_shortest = sma(series, shortestWindow, name="shortest")
+    sma_short = sma(series, shortWindow, name="short")
+    sma_long = sma(series, longWindow, name="long")
+    short_gt_long = greaterThan(sma_short, sma_long, name="short_gt_long")
+    shortest_gt_long = greaterThan(sma_shortest, sma_long, name="shortest_gt_long")
+    sellOrder = equal(short_gt_long, shortest_gt_long, name="sellOrder")
+    short_lt_long = lessThan(sma_short, sma_long, name="short_lt_long")
+    shortest_lt_long = lessThan(sma_shortest, sma_long, name="shortest_lt_long")
+    buyOrder = equal(shortest_lt_long, short_lt_long, name="buyOrder")
+    noOrder = equal(sellOrder, buyOrder, name='noOrder')
+    #if sma_shortest < sma_long && sma_short < sma_long -> Buy
+    #elseif sma_shortest > sma_long && sma_short > sma_long -> Sell
+    #else (sma_shortest == sma_long OR sma_short == sma_long) -> Do Nothing
+    return dataFrame({'sellOrder': sellOrder, 'buyOrder': buyOrder, 'noOrder': noOrder}, name='df')
 
 SOURCE_TYPES = ['seriesSource', 'dataFrame']
 SINK_TYPES = [seriesSink, DataFrame]
