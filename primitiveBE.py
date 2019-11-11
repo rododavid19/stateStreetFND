@@ -135,7 +135,6 @@ def LE(p):
 def EQ(p):
     a = p.arguments["a"].parent.arguments.data
     b = p.arguments["b"].parent.arguments.data
-
     if type(a) and type(b) is pd.DataFrame:
         p.arguments.data = pd.DataFrame.eq(a, b)
     if type(a) and type(b) is pd.Series:
@@ -546,10 +545,13 @@ def INTERVALCOUNT(p):
     if type(a) is pd.Series:
         p.arguments.data = pd.Series(rolling.count())
 
+def STRATEGY2SMA(p):
+    delta = p.arguments['delta']
+    result = pd.DataFrame(columns="Order")
+    #if 1 in order column, submit a buy order
 
-        #def DELAY(p):
-#    a = p.arguments["a"].parent.arguments.data
-#    if type(a) is pd.DataFrame:
-#        p.arguments.data = pd.DataFrame(a).shift()
-#    if type(a) is pd.Series:
-#        p.arguments.data = pd.Series(a).shift()
+
+def STRATEGY3SMA(p):
+    delta1 = p.arguments['delta1']
+    delta2 = p.arguments['delta2']
+    result = pd.DataFrame(columns="Order")
