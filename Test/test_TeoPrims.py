@@ -172,6 +172,28 @@ class testNetwork_ColumnMethods(unittest.TestCase):
             putColumns(df, columnDict, newDf)
             self.assertRaises(Exception, piEval, n, sourceDict)
 
+class testNetwork_SIMPLESMASTRATEGYTESTS(unittest.TestCase):
+    def test_SIMPLE2SMA_MINI(self):
+        #Checks to make sure columnNames is a string
+        with Network() as n:
+            forex = pd.read_csv("forex-mini.csv")
+            sourceDict = {'forex': forex}
+            df = seriesSource('forex')
+            simple_2SMA_Strategy(df, shortWindow=10, longWindow=100, name='2SMA')
+            sinkDict = piEval(n, sourceDict)
+            n.report()
+
+    def test_SIMPLE3SMA_MINI(self):
+        #Checks to make sure columnNames is a string
+        with Network() as n:
+            forex = pd.read_csv("forex-mini.csv")
+            sourceDict = {'forex': forex}
+            df = seriesSource('forex')
+            simple_3SMA_Strategy(df, shortWindow=10, shortestWindow=20, longWindow=100, name='3SMA')
+            sinkDict = piEval(n, sourceDict)
+            n.report()
+
+
 class testNetwork_EMA_STDEV_MIN_MAX_SUM_DELAY(unittest.TestCase):
 
     def test_EMADataframe(self):
