@@ -49,26 +49,23 @@ class TestApp(EWrapper, EClient):
         global dataArrived
         global FOREX
         global order_ID
-        lock.acquire()
         dataArrived = True
         arrived = TickTypeEnum.to_str(tickType) + "Price: " + str(price) + " "
         # Tick Price. Ticket ID: " + str(reqId) + "
         FOREX += arrived
         order_ID += 1
 
-        # csvThread = threading.Thread(target= writeToCSV)
-        # csvThread.start()
+    def realtimeBar(self, reqId: TickerId, time:int, open_: float, high: float, low: float, close: float, volume: int, wap: float, count: int):
+            super().realtimeBar(reqId, time, open_, high, low, close, volume, wap, count)
+            global dataArrived
+            global FOREX
+            global order_ID
+            print(open_ )
 
+            # arrived = open_
+            # FOREX += arrived
+            # dataArrived = True
 
-    # def tickSize(self, reqId:TickerId, tickType:TickType, size:int):
-    #     global lock
-    #     global changeCount
-    #     global dataArrived
-    #     with lock:
-    #         dataArrived = True
-    #         changeCount += 1
-    #         print("Here at Tick Size ID: " + str(changeCount))
-    #         lock.notify()
 
 
 def interactiveBrokers(symbol:str, secType:str, currency:str, exchange:str):
@@ -82,7 +79,7 @@ def interactiveBrokers(symbol:str, secType:str, currency:str, exchange:str):
     contract.currency = currency
     contract.exchange = exchange
     #app.reqMarketDataType(4)
-    app.reqMktData(1, contract, "", False, False, [])
+    app.reqRealTimeBars(1, contract, 5, "MIDPOINT", False, [])
     app.run()
 
 
