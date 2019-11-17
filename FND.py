@@ -528,7 +528,13 @@ def getColumns(series: Series, colNames, name: str=None) -> Series:
 def putColumns(series: Series, colNames, newDf: Series, name: str=None) -> Series:
     return Series(name, series)
 
+@primitive
+def andDF(a: Series, b:Series, name: str=None) -> Series:
+    return Series(name)
 
+@primitive
+def orDF(a: Series, b:Series, name: str=None) -> Series:
+    return Series(name)
 ## MODULES ##
 
 @module
@@ -547,6 +553,7 @@ def simple_2SMA_Strategy(series: Series, shortWindow: int=None, longWindow: int=
     sellOrder = greaterThan(sma_short, sma_long, name='sellOrder')
     buyOrder = lessThan(sma_short, sma_long, name='buyOrder')
     noOrder = equal(sellOrder, buyOrder, name='noOrder')
+
     #if sma_short < sma_long  -> Buy
     #else if sma_short > sma_long -> Sell
     #else (sma_short = sma_long) -> Do nothing
