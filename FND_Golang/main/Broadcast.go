@@ -9,11 +9,13 @@ type Broadcaster struct {
 	// private fields:
 	Listenc	chan chan (chan broadcast);
 	Sendc	chan<- interface{};
+	name string;
 }
 
 type Receiver struct {
 	// private fields:
 	C chan broadcast;
+	name string;
 }
 
 // create a new broadcaster object.
@@ -48,7 +50,7 @@ func NewBroadcaster() Broadcaster {
 func (b Broadcaster) Listen() Receiver {
 	c := make(chan chan broadcast, 0);
 	b.Listenc <- c;
-	return Receiver{<-c};
+	return Receiver{<-c, "" };
 }
 
 // broadcast a value to all listeners.
