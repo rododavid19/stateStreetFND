@@ -2,148 +2,163 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"strconv"
-	"strings"
 	"sync"
 	"time"
 )
 
-var OPERATORS = map[string]func(node *Node){
-	"sma": sma,
-	"add": add,
-}
 
-var contracts = []string{}
-
-var file, err_csv = os.Create("result.csv")
-
-var results = sync.Map{}
 
 var barrier sync.WaitGroup
 
+var compiler_handlers = map[string]Broadcaster{}
 
-func add(n *Node){
+var registered_recievers = map[string]bool{}
+
+var price_map = map[string]int{
+	"open" : 0,
+	"high" : 1,
+	"low" : 2,
+	"close" : 3,
+}
+
+func ADD(a *Receiver, b *Receiver) Receiver{
+
+
+
+	add_toSring := a.name + " + " + b.name
+
+	if _, ok := compiler_handlers[add_toSring]; ok {
+
+		listener := compiler_handlers[add_toSring].Listen()
+		return listener
+	}
+
+
+
+	if _, ok := registered_recievers[a.name]; ok {
+		list := compiler_handlers[a.name].Listen()
+		list.name = a.name
+		a = &list
+	}
+
+	if _, ok := registered_recievers[b.name]; ok {
+
+		if a!= b{
+			list := compiler_handlers[b.name].Listen()
+			list.name = b.name
+			b = &list
+		}
+
+	}
+
+	registered_recievers[a.name] = true
+	if a != b {
+		registered_recievers[b.name] = true
+	}
+
+
+
+	composer := NewBroadcaster()
+	compiler_handlers[add_toSring] = composer
+
+	fmt.Println( "ADD" + add_toSring + " created at ", time.Now()  );
+	go add_eval( a, b, &composer, add_toSring)
+
+	listener := composer.Listen()
+
+
+
+	return listener
 
 
 }
 
+func add_eval(source_a *Receiver, source_b *Receiver, output *Broadcaster, id string){
 
 
-func sma(n *Node ){
-
-	bidPrices := []float64{}		// treat like necessary value cache
-	askPrices := []float64{}
-
-	r := composer.Listen()
-	for v := r.Read(); v != nil; v = r.Read() {
-
-		fmt.Println( n.primitive.name, " RECIEVED: ", v);
-		data_raw := fmt.Sprintf( "%v", v)
-		data_split := strings.SplitAfter(data_raw, " ")
-		got_bid_price := false
-		got_ask_price := false
-
-	for i, _ := range data_split{
-
-		curr_fromEnd := data_split[len(data_split)-i-1]
-
-		if(curr_fromEnd == "BIDPrice: " && !got_bid_price){
-			bid_price := data_split[len(data_split)-i]
-			bid_price = strings.TrimSpace(bid_price)
-			bid_Float, _ := strconv.ParseFloat(bid_price, 64)
-			bidPrices = append(bidPrices, bid_Float)
-			got_bid_price = true
+	if( source_a == source_b){
+		for b := source_b.Read(); b != nil; b = source_b.Read() {
+			data_b := fmt.Sprintf("%v", b)
+			println("SAME SOURCE ADD prim is adding: " + data_b + " + " + data_b )
 		}
 
-		if(curr_fromEnd == "ASKPrice: " && !got_ask_price){
-			ask_price := data_split[len(data_split)-i]
-			ask_price = strings.TrimSpace(ask_price)
-			ask_Float, _ := strconv.ParseFloat(ask_price, 64)
-			askPrices = append(askPrices, ask_Float)
-			got_ask_price = true
-		}
+	}
 
-		if (got_bid_price && got_ask_price){
-			fmt.Println( n.primitive.name, " EXTRACTED: ",  "bid: ",bidPrices[len(bidPrices)-1], "ask: ", askPrices[len(askPrices)-1] );
+
+
+	for a := source_a.Read(); a != nil; a = source_a.Read() {
+
+
+		for b := source_b.Read(); b != nil; {
+			data_a := fmt.Sprintf("%v", a)
+			data_b := fmt.Sprintf("%v", b)
+			println(  "ADD: ", id, " ", data_a,  " + " + data_b )
 			break
 		}
 
-	}
 
-	if(got_bid_price && !got_ask_price){
-		fmt.Println( n.primitive.name, " BID EXTRACTED: ",bidPrices[len(bidPrices)-1] );
-	}
-
-	if(!got_bid_price && got_ask_price){
-		fmt.Println( n.primitive.name, " ASK EXTRACTED: ", askPrices[len(askPrices)-1] );
 
 	}
-
-
 
 
 
 }
 
 
+
+//TODO: add mapping of priceType string to index in
+
+
+
+func SMA( seriesSource *Receiver, window int, optionalName string ) *Receiver {
+
+
+	if _, ok := compiler_handlers[optionalName]; ok {
+
+		listener := compiler_handlers[optionalName].Listen()
+		return &listener
+	}
+
+
+	 composer := NewBroadcaster()
+	 compiler_handlers[optionalName] = composer
+
+	fmt.Println( optionalName + " created at ", time.Now()  );
+	go sma_eval( seriesSource,&composer, optionalName)
+
+	listener := composer.Listen()
+	listener.name = optionalName
+
+
+	 return &listener
+
+
+
+	}
 	//defer barrier.Done()
 
-}
 
 
-var sourceOracle = make(map[string][]int, 5)
+func sma_eval( source *Receiver, output *Broadcaster, id string) {
+
+	barrier.Add(1)
+
+	//openPrices := []float64{}
+	//highPrices := []float64{}
+
+	//composer := NewBroadcaster()
+
+	r := source
+	for v := r.Read(); v != nil; v = r.Read() {
+
+		//TODO: use mapping of index to priceType to access correct data in data_split
 
 
-var count = 0
-
-func (n *Network) piEval(){
-//	go startServer()// server should now continuously grab data
-	// use channel to communicate
-
-//	sizeSources := len(n.sources)
-//	provider := make(map[string]chan[]int, sizeSources)
-
-	//for _, src := range n.sources{
-	//
-	//	// TODO: go startDataClient(contract). Establish connection and update global sourceOracle thru channels.
-	//
-	//
-	//
-	//}
-
-	for _, curr := range n.nodes{
-
-		if len(curr.children) > 0{
-
-			fmt.Println( curr.name  )
-
-			for _, child := range curr.children{
-				var f  = OPERATORS[child.name]
-				go f(&child)
-				time.Sleep(time.Nanosecond)
-			}
-			//time.Sleep(time.Nanosecond)
-		}else{
-
-			var f  = OPERATORS[curr.name]
-			count += 1
-			barrier.Add(1)
-			go f(curr)
-			time.Sleep(time.Nanosecond)
-		}
-
-
+		output.Write(v)
+		fmt.Println(id, " RECIEVED at time ", time.Now()   , " from reciever ", source.name  ); //v);
 	}
 
-	barrier.Wait()
-	fmt.Println(time.Now())
-
-
-
-
-
-
 }
+
 
 

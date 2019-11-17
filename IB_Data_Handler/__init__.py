@@ -19,7 +19,6 @@ from ibapi.order_condition import *
 from ibapi.contract import *
 from ibapi.order import *
 from ibapi.order_state import *
-import matplotlib.pyplot as plt
 import csv
 import random
 
@@ -31,10 +30,12 @@ from multiprocessing import Process
 marketData = ""
 changeCount = 0
 loop_flag = False
-lock = threading.Condition()
 dataArrived = False
 order_ID = 0
-FOREX = ""
+
+locks = [ ]
+FOREX = [ ]
+
 
 
 class TestApp(EWrapper, EClient):
@@ -57,20 +58,61 @@ class TestApp(EWrapper, EClient):
 
     def realtimeBar(self, reqId: TickerId, time:int, open_: float, high: float, low: float, close: float, volume: int, wap: float, count: int):
             super().realtimeBar(reqId, time, open_, high, low, close, volume, wap, count)
-            global dataArrived
             global FOREX
             global order_ID
-            print(open_ )
+            global locks
 
-            # arrived = open_
-            # FOREX += arrived
-            # dataArrived = True
+            lock = locks[reqId]
+            print("locking ", reqId)
+            with lock:
+                arrived = str(open_) + " " + str(high) + " " + str(low) + " " + str(close)
+                print(" Open: " + str(open_) + " High: " + str(high) + " Low: " + str(low) + " Close: " + str(close))
+                if len(FOREX) == 0:
+                    FOREX.append(arrived)
+                else:
+                    FOREX[reqId] += arrived
+                print("FOREX: ", FOREX[reqId] )
+                print("unlocking ", reqId)
+                lock.notifyAll()
+
+    def historicalData(self, reqId: int, bar: BarData):
+       # print("HistoricalData. ReqId:", reqId, "BarData.", bar)
+        global FOREX
+        global order_ID
+        global locks
+        if reqId == 1:
+            print("other served" , '\n')
+
+        lock = locks[reqId]
+        print("IB Locking ", reqId, "\n")
+        with lock:
+            arrived = str(bar) + " "
+            if len(FOREX) <= reqId:
+                FOREX.append(arrived)
+            else:
+        #        print("Querying ", reqId, " in FOREX")
+                FOREX[reqId] += arrived
+            try:
+                print("FOREX: ", FOREX[reqId] , '\n')
+            except:
+                print("Attempted to access Forex[", reqId,"] but it does not exist. It's current lenght is " , len(FOREX)  )
+          #  print("unlocking ", reqId)
+            print("IB Unlocking ", reqId, "\n")
+            lock.notify()
 
 
 
-def interactiveBrokers(symbol:str, secType:str, currency:str, exchange:str):
+    def orderStatus(self, orderId:OrderId , status:str, filled:float,
+                    remaining:float, avgFillPrice:float, permId:int,
+                    parentId:int, lastFillPrice:float, clientId:int,
+                    whyHeld:str, mktCapPrice: float):
+        print(status)
+
+
+
+def interactiveBrokers(symbol:str, secType:str, currency:str, exchange:str, orderID:str):
     app = TestApp()
-    app.connect("127.0.0.1", 7497, 0)
+    app.connect("127.0.0.1", 7497, orderID)
     time.sleep(.0000000000001)  # TODO: report bug to IB repo. or daemon?
     # in production code, wait for nexOder call back before you continue
     contract = Contract()
@@ -79,54 +121,69 @@ def interactiveBrokers(symbol:str, secType:str, currency:str, exchange:str):
     contract.currency = currency
     contract.exchange = exchange
     #app.reqMarketDataType(4)
-    app.reqRealTimeBars(1, contract, 5, "MIDPOINT", False, [])
+    print("Requesting IB contract by id" , orderID )
+    queryTime = (datetime.datetime.today() - datetime.timedelta(days=179)).strftime("%Y%m%d %H:%M:%S")
+    app.reqHistoricalData(int(orderID), contract, queryTime,"1 M", "1 day", "MIDPOINT", 1, 1, False, [] )
+   # app.reqRealTimeBars(int(orderID), contract, 5, "MIDPOINT", False, [])
     app.run()
 
 
 
 class ThreadedUDPRequestHandler(socketserver.BaseRequestHandler):
 
-    # TODO: adapt handle to tick size and tick price
     def handle(self):
         global FOREX
         global dataArrived
+        global order_ID
+        global locks
+        local_id = order_ID
+        print("NEW CLIENT: ", order_ID , '\n')
         recieved = self.request[0].strip()
         request = str.split(recieved.decode("utf-8"))
         socket = self.request[1]
-        current_thread = threading.current_thread()
-        IB_args = request[:request.__len__()]
+
+        IB_args = request[:request.__len__()-1]
+        req_id = order_ID
+        IB_args.append(req_id)
+        print("starting IB with id ", req_id, '\n')
         IB_thread = threading.Thread(target=interactiveBrokers, args=IB_args)
-        # to fix .000001 sleep bug, change IB_thread daemon here?
+        clientSink_args = [local_id, socket, self.client_address ]
+        clientSink_thread = threading.Thread(target=client_sink, args=clientSink_args)
+        lock = threading.Condition()
+        locks.append(lock)
         IB_thread.start()
+        clientSink_thread.start()
+        order_ID += 1
 
 
-        while(True):
-            if dataArrived == True:
-                # print("Bundle Data ID: ", FOREX , " is leaving at time ", datetime.datetime.now().time()
-                # , bytes(FOREX.encode("utf-8")).__sizeof__() )
-                print("FOREX: ", FOREX)
-                # TODO: cut excess data if appended and pass if data is irrelevant (close, high )
-                socket.sendto(bytes(FOREX.encode("utf-8")), self.client_address)
-                FOREX = ""
-            dataArrived = False
-
-
+def client_sink(id:int, socket, client_address ):
+    global locks
+    global FOREX
+    lock = locks[id]
+    while(True):
+        with lock:
+            print("Sender Locking ", id, " at time: " , datetime.datetime.today(),'\n',)
+            lock.wait()
+            print("Sender UNLOCKING ", id,  " at time: " , datetime.datetime.today(), '\n',)
+            try:
+                print(id, " is SENDING ", FOREX[id], '\n')
+                socket.sendto(bytes(FOREX[id].encode("utf-8")), client_address)
+            except:
+                print(" FOREX index incorrect attempted on index: ", id, '\n' )
+            FOREX[id] = ""
 
 
 class ThreadedUDPServer(socketserver.ThreadingMixIn, socketserver.UDPServer):   # is declaration necessary?
     pass
 
 def serverLaunch():
-
     HOST, PORT = "127.0.0.1", 19192
     server = socketserver.UDPServer( (HOST,PORT), ThreadedUDPRequestHandler)
 
     with server:
         ip, port = server.server_address
-
         server_thread = threading.Thread(target=server.serve_forever)
-        server_thread.daemon = True # will terminate thread when main is done
-
+        server_thread.daemon = False # will terminate thread when main is done
         try:
             server_thread.start()
             print("Server started at {} port {}".format(HOST, PORT))
