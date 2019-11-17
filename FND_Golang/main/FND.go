@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"net"
 	"sync"
 )
 
@@ -20,6 +21,7 @@ type Node struct {
 	isPrimitive bool
 	children []Node
 	data int
+	distributor Broadcaster
 
 }
 
@@ -178,256 +180,60 @@ func (n *Network) pushModule( module *Node, primitives *[]Node ){
 
 // ### Source Operators ###
 
-func seriesSource(name string ) {
+
+var handlers = map[string]Broadcaster{}
+
+
+func seriesSource(source string, priceType string ) *Receiver {
 	// addNode, this will be shared by everyone
 	//defer barrier.Done()
 
-	sourceDict := map[string]string{
-		"eur/usd": "EUR CASH USD IDEALPRO",
+
+
+	if _, ok := handlers[source]; ok {
+
+		listener := handlers[source].Listen()
+		listener.name = source
+		return &listener
 	}
 
-	message := []byte(sourceDict[name] )  // specify contract details, max period,
-	_, err_ = conn.Write(message)
+	composer := NewBroadcaster()
+	handlers[source] = composer
+	composer.name = source
+
+	go sinkSource(&composer, source + " " + priceType)
+
+	listener := composer.Listen()
+	listener.name = source +  " " + priceType
 
 
-	// receive message from server
-	//buffer := make([]byte, 512)
-	//data, _, _ := conn.ReadFromUDP(buffer)
+	return &listener
 
 
-	//fmt.Println("UDP Server : ", addr)
-	//  hotData <- string(buffer[:n])
-	//fmt.Println("Received from UDP server : ", string(buffer[:data]) + " error code: " )
+}
 
+
+
+func sinkSource( composer *Broadcaster, contract string){
+
+	var hostName = "127.0.0.1"
+	var portNum =  "19192"
+	var service = hostName + ":" + portNum
+	var RemoteAddr, _ = net.ResolveUDPAddr("udp", service)
+	println("Starting port: " , portNum)
+	var conn, _ = net.DialUDP("udp", nil, RemoteAddr)
+
+
+	message := []byte(contract)  // specify contract details, max period,
+	_, _ = conn.Write(message)
 
 	for{
 		buffer := make([]byte, 512)
 		data, _, _ := conn.ReadFromUDP(buffer)
 		if data > 0{ }
 		data_s := string(buffer[:])
-		// TODO: make dataframe and dist. in that format?
-		//fmt.Println("RECIEVED", data_s, " at time ", 	time.Now())
 		composer.Write(data_s)
-		//composer <- data_s,  TODO: old version, one-to-one
 	}
 
 }
-
-
-
-
-// ## Arithmetic Operator //
-
-func (n *Network) Add (a Series, b Series, optionalName string){
-	prim := Node{name:"add", isPrimitive:true, primitive:Primitive{argument_a:a, argument_b:b, isType:a.isType, name:optionalName}}
-	n.pushPrimitive(&prim)
-}
-
-func (n *Network) Subtract (a Series, b Series, optionalName string){
-	prim := Node{name:"subtract", isPrimitive:true, primitive:Primitive{argument_a:a, argument_b:b, isType:a.isType, name:optionalName}}
-	n.pushPrimitive(&prim)
-}
-
-
-func (n *Network) Multiply (a Series, b Series, optionalName string){
-	prim := Node{name:"multiply", isPrimitive:true, primitive:Primitive{argument_a:a, argument_b:b, isType:a.isType, name:optionalName}}
-	n.pushPrimitive(&prim)
-}
-
-func (n *Network) Divide (a Series, b Series, optionalName string){
-	prim := Node{name:"divide", isPrimitive:true, primitive:Primitive{argument_a:a, argument_b:b, isType:a.isType, name:optionalName}}
-	n.pushPrimitive(&prim)
-}
-
-func (n *Network) Neg(a Series, b Series, optionalName string){
-	prim := Node{name:"neg", isPrimitive:true, primitive:Primitive{argument_a:a, argument_b:b, isType:a.isType, name:optionalName}}
-	n.pushPrimitive(&prim)
-}
-
-
-func (n *Network) Abs(a Series, span int, optionalName string){
-	prim := Node{name:"abs", isPrimitive:true, primitive:Primitive{argument_a:a, isType:a.isType, name:optionalName, span:span}}
-	n.pushPrimitive(&prim)
-}
-
-func (n *Network) Remainder(a Series, span int, optionalName string){
-	prim := Node{name:"remainder", isPrimitive:true, primitive:Primitive{argument_a:a, isType:a.isType, name:optionalName, span:span}}
-	n.pushPrimitive(&prim)
-}
-
-
-func (n *Network) Floor(a Series, span int, optionalName string){
-	prim := Node{name:"floor", isPrimitive:true, primitive:Primitive{argument_a:a, isType:a.isType, name:optionalName, span:span}}
-	n.pushPrimitive(&prim)
-}
-
-func (n *Network) Ceiling(a Series, span int, optionalName string){
-	prim := Node{name:"ceiling", isPrimitive:true, primitive:Primitive{argument_a:a, isType:a.isType, name:optionalName, span:span}}
-	n.pushPrimitive(&prim)
-}
-
-func (n *Network) Log(a Series, span int, optionalName string){
-	prim := Node{name:"log", isPrimitive:true, primitive:Primitive{argument_a:a, isType:a.isType, name:optionalName, span:span}}
-	n.pushPrimitive(&prim)
-}
-
-func (n *Network) lessThan(a Series, span int, optionalName string){
-	prim := Node{name:"lessThan", isPrimitive:true, primitive:Primitive{argument_a:a, isType:a.isType, name:optionalName, span:span}}
-	n.pushPrimitive(&prim)
-}
-
-func (n *Network) lessOrEqual(a Series, span int, optionalName string){
-	prim := Node{name:"lessOrEqual", isPrimitive:true, primitive:Primitive{argument_a:a, isType:a.isType, name:optionalName, span:span}}
-	n.pushPrimitive(&prim)
-}
-
-func (n *Network) Equal(a Series, span int, optionalName string){
-	prim := Node{name:"equal", isPrimitive:true, primitive:Primitive{argument_a:a, isType:a.isType, name:optionalName, span:span}}
-	n.pushPrimitive(&prim)
-}
-
-func (n *Network) greaterOrEqual(a Series, span int, optionalName string){
-	prim := Node{name:"greaterOrEqual", isPrimitive:true, primitive:Primitive{argument_a:a, isType:a.isType, name:optionalName, span:span}}
-	n.pushPrimitive(&prim)
-}
-
-func (n *Network) notEqual(a Series, span int, optionalName string){
-	prim := Node{name:"notEqual", isPrimitive:true, primitive:Primitive{argument_a:a, isType:a.isType, name:optionalName, span:span}}
-	n.pushPrimitive(&prim)
-}
-
-func (n *Network) greaterThan(a Series, span int, optionalName string){
-	prim := Node{name:"greaterThan", isPrimitive:true, primitive:Primitive{argument_a:a, isType:a.isType, name:optionalName, span:span}}
-	n.pushPrimitive(&prim)
-}
-
-
-// Fixed-Size Rolling Windows //
-
-func (n *Network) SMA( window int, optionalName string){
-
-	prim := Node{name:"sma", isPrimitive:true, primitive:Primitive{ name:optionalName, window:window}}
-	n.pushPrimitive(&prim)
-}
-
-
-func (n *Network) STDEV(a Series, span int, optionalName string){
-	prim := Node{name:"stdev", isPrimitive:true, primitive:Primitive{argument_a:a, isType:a.isType, name:optionalName, span:span}}
-	n.pushPrimitive(&prim)
-}
-
-func (n *Network) Min(a Series, span int, optionalName string){
-	prim := Node{name:"min", isPrimitive:true, primitive:Primitive{argument_a:a, isType:a.isType, name:optionalName, span:span}}
-	n.pushPrimitive(&prim)
-}
-
-func (n *Network) Max(a Series, span int, optionalName string){
-	prim := Node{name:"max", isPrimitive:true, primitive:Primitive{argument_a:a, isType:a.isType, name:optionalName, span:span}}
-	n.pushPrimitive(&prim)
-}
-
-func (n *Network) Sum(a Series, span int, optionalName string){
-	prim := Node{name:"sum", isPrimitive:true, primitive:Primitive{argument_a:a, isType:a.isType, name:optionalName, span:span}}
-	n.pushPrimitive(&prim)
-}
-
-func (n *Network) Delay(a Series, span int, optionalName string){
-	prim := Node{name:"delay", isPrimitive:true, primitive:Primitive{argument_a:a, isType:a.isType, name:optionalName, span:span}}
-	n.pushPrimitive(&prim)
-}
-
-
-// Exponentially Weighted //
-func (n *Network) EMA(a Series, window int, optionalName string){
-	prim := Node{name:"ema", isPrimitive:true, primitive:Primitive{argument_a:a, isType:a.isType, name:optionalName, window:window}}
-	n.pushPrimitive(&prim)
-}
-
-
-
-// Time Interval //
-
-func (n *Network) intervalMean(a Series, window int, optionalName string){
-	prim := Node{name:"intervalMean", isPrimitive:true, primitive:Primitive{argument_a:a, isType:a.isType, name:optionalName, window:window}}
-	n.pushPrimitive(&prim)
-}
-
-func (n *Network) intervalSTDEV(a Series, window int, optionalName string){
-	prim := Node{name:"intervalSTDEV", isPrimitive:true, primitive:Primitive{argument_a:a, isType:a.isType, name:optionalName, window:window}}
-	n.pushPrimitive(&prim)
-}
-
-func (n *Network) intervalMin(a Series, window int, optionalName string){
-	prim := Node{name:"intervalMin", isPrimitive:true, primitive:Primitive{argument_a:a, isType:a.isType, name:optionalName, window:window}}
-	n.pushPrimitive(&prim)
-}
-
-func (n *Network) intervalMax(a Series, window int, optionalName string){
-	prim := Node{name:"intervalMax", isPrimitive:true, primitive:Primitive{argument_a:a, isType:a.isType, name:optionalName, window:window}}
-	n.pushPrimitive(&prim)
-}
-
-func (n *Network) intervalSum(a Series, window int, optionalName string){
-	prim := Node{name:"intervalSum", isPrimitive:true, primitive:Primitive{argument_a:a, isType:a.isType, name:optionalName, window:window}}
-	n.pushPrimitive(&prim)
-}
-
-func (n *Network) intervalCount(a Series, window int, optionalName string){
-	prim := Node{name:"intervalCount", isPrimitive:true, primitive:Primitive{argument_a:a, isType:a.isType, name:optionalName, window:window}}
-	n.pushPrimitive(&prim)
-}
-
-
-// Time-Weighted //
-
-func (n *Network) timeWeightedMean(a Series, window int, optionalName string){
-	prim := Node{name:"timeWeightedMean", isPrimitive:true, primitive:Primitive{argument_a:a, isType:a.isType, name:optionalName, window:window}}
-	n.pushPrimitive(&prim)
-}
-
-func (n *Network) timeWeightedSTDEV(a Series, window int, optionalName string){
-	prim := Node{name:"timeWeightedSTDEV", isPrimitive:true, primitive:Primitive{argument_a:a, isType:a.isType, name:optionalName, window:window}}
-	n.pushPrimitive(&prim)
-}
-
-
-
-
-// Modules //
-func (n *Network) MACD(a Series, optionalName string){
-
-	//if strings.Contains(optionalName, "MACD_")
-	if !contains(a.name, n.sources){
-		// TODO: cache if many sources are created. IE. ask Bishop how many sources are usually used.
-		n.sources = append(n.sources, a.name)
-	}
-
-	module := Node{name:"MACD", isPrimitive:false, module:Module{argument_a:a, isType:a.isType, name:optionalName, shortSpan:12, longSpan:22, signalSpan:9}}
-	primitives := make([]Node, 0)
-	primitives = append(primitives, Node{name:"add", isPrimitive:true, })
-	primitives = append(primitives, Node{name:"add", isPrimitive:true, })
-	primitives = append(primitives, Node{name:"add", isPrimitive:true, })
-	primitives = append(primitives, Node{name:"add", isPrimitive:true, })
-	primitives = append(primitives, Node{name:"add", isPrimitive:true, })
-	primitives = append(primitives, Node{name:"add", isPrimitive:true, })
-	n.pushModule( &module, &primitives)
-}
-
-
-func contains( target string ,sources []string) bool {
-
-	for _, curr := range sources{
-
-		if curr == target{
-			return true
-		}
-
-	}
-
-	return false
-}
-
-
-
-// TODO: MethodByName() call, requires that first letter is capitalized!!!!!
 
