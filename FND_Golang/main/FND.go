@@ -2,21 +2,26 @@ package main
 
 import (
 	"fmt"
+	"net"
 	"sync"
 )
 
 // operator overloading
 
 var SOURCE_TYPES  = [2]string{"seriesSource", "dataFrame"}
+
 // Sink Type
 
 
 // Node a single node that composes the tree
 type Node struct {
-	name string
+	name string  // TODO: change this to type_name
 	primitive Primitive
 	module Module
 	isPrimitive bool
+	children []Node
+	data int
+	distributor Broadcaster
 
 }
 
@@ -31,47 +36,48 @@ type Network struct {
 	nodes []*Node
 	edges map[string][]*Node
 	lock  sync.RWMutex
+	sources []string
 }
 
 
 // Traverse implements the BFS traversing algorithm
-func (g *Network) Traverse(f func(*Node)) {
-	g.lock.RLock()
-	q := NodeQueue{}
-	q.New()
-	n := g.nodes[0]
-	q.Enqueue(*n)
-	visited := make(map[*Node]bool)
-	for {
-		if q.IsEmpty() {
-			break
-		}
-		node := q.Dequeue()
-		visited[node] = true
-		near := g.edges[node.name]
-
-		for i := 0; i < len(near); i++ {
-			j := near[i]
-			if !visited[j] {
-				q.Enqueue(*j)
-				visited[j] = true
-			}
-		}
-		if f != nil {
-			f(node)
-		}
-	}
-	g.lock.RUnlock()
-}
+//func (g *Network) Traverse(f func(*Node)) {
+//	g.lock.RLock()
+//	q := NodeQueue{}
+//	q.New()
+//	n := g.nodes[0]
+//	q.Enqueue(*n)
+//	visited := make(map[*Node]bool)
+//	for {
+//		if q.IsEmpty() {
+//			break
+//		}
+//		node := q.Dequeue()
+//		visited[node] = true
+//		near := g.edges[node.name]
+//
+//		for i := 0; i < len(near); i++ {
+//			j := near[i]
+//			if !visited[j] {
+//				q.Enqueue(*j)
+//				visited[j] = true
+//			}
+//		}
+//		if f != nil {
+//			f(node)
+//		}
+//	}
+//	g.lock.RUnlock()
+//}
 
 
 // TODO: printReport()
-func (g *Network) TestTraverse() {
-
-	g.Traverse(func(n *Node) {
-		fmt.Printf("%v\n", n)
-	})
-}
+//func (g *Network) TestTraverse() {
+//
+//	g.Traverse(func(n *Node) {
+//		fmt.Printf("%v\n", n)
+//	})
+//}
 
 
 func (g *Network) String() string {
@@ -80,6 +86,8 @@ func (g *Network) String() string {
 	for i := 0; i < len(g.nodes); i++ {
 		s += g.nodes[i].String() + " -> "
 		near := g.edges[g.nodes[i].name]
+
+		// TODO: delete bottom loop. Replace with g.node[i].Children and iterate thru each one and pritn the name
 		for j := 0; j < len(near); j++ {
 			s += near[j].String()
 			if j < len(near) - 1{
@@ -93,6 +101,7 @@ func (g *Network) String() string {
 	g.lock.RUnlock()
 	return s
 }
+
 
 
 // AddNode adds a node to the graph
@@ -114,21 +123,14 @@ func (g *Network) AddEdge(n1, n2 *Node) {
 }
 
 
-
-
-
-
-
 func ( n *Network) Init( ) {
 
 }
 
 
-
 type Series struct{
 	name string
 	isType string
-	//  :(   Operator Overload
 }
 
 func (s Series) init( name string){
@@ -138,16 +140,9 @@ func (s Series) init( name string){
 
 
 
-
-
-func networkSingleton () {
-	// ? Still slightly unclear as to what's going on here
-}
-
 type DataFrame struct{
 	// init
 	// getItem
-
 }
 
 type Module struct{
@@ -161,18 +156,12 @@ type Module struct{
 type Primitive struct{
 	argument_a Series
 	argument_b Series
-	window int
+	window, span int
 	isType, name string
-
 }
 
 
 
-func seriesSource(name string ) Series{
-	// addNode, this will be shared by everyone
-	return Series{name, "seriesSource"}
-
-}
 
 func (n *Network) pushPrimitive( prim *Node){
 	n.AddNode(prim)
@@ -181,36 +170,70 @@ func (n *Network) pushPrimitive( prim *Node){
 
 func (n *Network) pushModule( module *Node, primitives *[]Node ){
 	n.AddNode(module)
-	for _, curr := range *primitives {
-		cp := Node{ name:curr.name}
-		n.AddEdge(module, &cp )
+	module.children = *primitives
+	//for _, curr := range *primitives {
+	//	cp := Node{ name:curr.name}
+	//	n.AddEdge(module, &cp )
+	//}
+}
+
+
+// ### Source Operators ###
+
+
+var handlers = map[string]Broadcaster{}
+
+
+func seriesSource(source string, priceType string ) *Receiver {
+	// addNode, this will be shared by everyone
+	//defer barrier.Done()
+
+
+
+	if _, ok := handlers[source]; ok {
+
+		listener := handlers[source].Listen()
+		listener.name = source
+		return &listener
 	}
-}
+
+	composer := NewBroadcaster()
+	handlers[source] = composer
+	composer.name = source
+
+	go sinkSource(&composer, source + " " + priceType)
+
+	listener := composer.Listen()
+	listener.name = source +  " " + priceType
 
 
-func (n *Network) SMA(a Series, window int, optionalName string){
-	prim := Node{name:"SMA", isPrimitive:true, primitive:Primitive{argument_a:a, isType:a.isType, name:optionalName, window:window}}
-	n.pushPrimitive(&prim)
-}
+	return &listener
 
 
-func (n *Network) MACD(a Series, optionalName string){
-
-	module := Node{name:"MACD", isPrimitive:false, module:Module{argument_a:a, isType:a.isType, name:optionalName, shortSpan:12, longSpan:22, signalSpan:9}}
-	primitives := make([]Node, 0)
-	primitives = append(primitives, Node{name:"EMA", isPrimitive:true, })
-	primitives = append(primitives, Node{name:"EMA", isPrimitive:true, })
-	primitives = append(primitives, Node{name:"Subtract", isPrimitive:true, })
-	primitives = append(primitives, Node{name:"EMA", isPrimitive:true, })
-	primitives = append(primitives, Node{name:"Subtract", isPrimitive:true, })
-	primitives = append(primitives, Node{name:"DataFrame", isPrimitive:true, })
-	n.pushModule( &module, &primitives)
 }
 
 
 
+func sinkSource( composer *Broadcaster, contract string){
+
+	var hostName = "127.0.0.1"
+	var portNum =  "19192"
+	var service = hostName + ":" + portNum
+	var RemoteAddr, _ = net.ResolveUDPAddr("udp", service)
+	println("Starting port: " , portNum)
+	var conn, _ = net.DialUDP("udp", nil, RemoteAddr)
 
 
+	message := []byte(contract)  // specify contract details, max period,
+	_, _ = conn.Write(message)
 
-// TODO: MethodByName() call, requires that first letter is capitalized!!!!!
+	for{
+		buffer := make([]byte, 512)
+		data, _, _ := conn.ReadFromUDP(buffer)
+		if data > 0{ }
+		data_s := string(buffer[:])
+		composer.Write(data_s)
+	}
+
+}
 
