@@ -180,7 +180,15 @@ def PRICECEILING(p):
     if type(a) is pd.DataFrame or pd.Series:
         p.arguments.data = np.ceil(a)
 
+def ANDDF(p):
+    a = p.arguments['a'].parent.argument.data
+    b = p.arguments['b'].parent.argument.data
+    p.arguments.data = a & b
 
+def ORDF(p):
+    a = p.arguments['a'].parent.argument.data
+    b = p.arguments['b'].parent.argument.data
+    p.arguments.data = a | b
 
 def ADDTICKS(p):
    #Todo Figure out how to add ticks to series objects

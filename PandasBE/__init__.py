@@ -73,6 +73,8 @@ PRIMITIVE_MAP = {
     "intervalMax": INTERVALMAX,
     "intervalSum": INTERVALSUM,
     "intervalCount": INTERVALCOUNT,
+    "andDF": ANDDF,
+    "orDF": ORDF,
 
   #  SeriesSink: PandasImmediate.seriesSink,
    # DataFrameSink: PandasImmediate.dataFrameSink,
