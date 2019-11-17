@@ -190,6 +190,9 @@ def ORDF(p):
     b = p.arguments['b'].parent.argument.data
     p.arguments.data = a | b
 
+def NOTDF(p):
+    a = p.arguments['a'].parent.argument.data
+
 def ADDTICKS(p):
    #Todo Figure out how to add ticks to series objects
    a = p.arguments["a"].parent.data
