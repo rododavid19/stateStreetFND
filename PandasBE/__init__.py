@@ -73,10 +73,13 @@ PRIMITIVE_MAP = {
     "intervalMax": INTERVALMAX,
     "intervalSum": INTERVALSUM,
     "intervalCount": INTERVALCOUNT,
-    "simple_2SMA_Strategy": STRATEGY2SMA,
-    "simple_3SMA_Strategy": STRATEGY3SMA,
     "andDF": ANDDF,
     "orDF": ORDF,
+    'dfBoolToInt': DFBOOLTOINT,
+    'quantityToDf': QUANTITYTODF,
+    'replaceTimeColumnDf': REPLACETIMECOLUMNDF,
+    'columnSumDf' : COLUMNSUMDF,
+
 
   #  SeriesSink: PandasImmediate.seriesSink,
    # DataFrameSink: PandasImmediate.dataFrameSink,

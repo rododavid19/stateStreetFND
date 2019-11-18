@@ -535,6 +535,27 @@ def andDF(a: Series, b:Series, name: str=None) -> Series:
 @primitive
 def orDF(a: Series, b:Series, name: str=None) -> Series:
     return Series(name)
+
+@primitive
+def dfBoolToInt(a: Series, name: str=None) -> Series:
+    return Series(name)
+
+@primitive
+def quantityToDf(a: Series, quantity=int, name: str=None) -> Series:
+    return Series(name)
+
+@primitive
+def deleteTimeColumnDf(a: Series, b: Series, name: str=None) -> Series:
+    return Series(name)
+
+@primitive
+def replaceTimeColumnDf(a: Series, b: Series, name: str=None) -> Series:
+    return Series(name)
+
+@primitive
+def columnSumDf(a: Series, name: str=None) -> Series:
+    return Series(name)
+
 ## MODULES ##
 
 @module
@@ -547,17 +568,24 @@ def macd(series: Series, shortSpan: int=12, longSpan: int=22, signalSpan: int=9,
     return dataFrame({'delta':delta, 'signal':signal, 'histogram': histogram}, name='df')
 
 @module
-def simple_2SMA_Strategy(series: Series, shortWindow: int=None, longWindow: int=None, name: str=None) -> DataFrame:
-    sma_short = sma(series, shortWindow, name='short')
-    sma_long = sma(series, longWindow, name='long')
-    sellOrder = greaterThan(sma_short, sma_long, name='sellOrder')
-    buyOrder = lessThan(sma_short, sma_long, name='buyOrder')
-    noOrder = equal(sellOrder, buyOrder, name='noOrder')
-
+def simple_2SMA_Strategy(series: Series, shortWindow: int=None, longWindow: int=None, quantity: int=None, name: str=None) -> DataFrame:
     #if sma_short < sma_long  -> Buy
     #else if sma_short > sma_long -> Sell
     #else (sma_short = sma_long) -> Do nothing
-    return dataFrame({'sellOrder': sellOrder, 'buyOrder': buyOrder, 'noOrder': noOrder}, name='df')
+    sma_short = sma(series, shortWindow, name='short')
+    sma_long = sma(series, longWindow, name='long')
+    sellOrder = greaterOrEqual(sma_short, sma_long, name='sellOrder')
+    buyOrder = lessOrEqual(sma_short, sma_long, name='buyOrder')
+    sellOrderInt = dfBoolToInt(sellOrder, name='sellOrderInt')
+    buyOrderInt = dfBoolToInt(buyOrder, name='buyOrderInt')
+    buy_sellOrder = subtract(sellOrderInt, buyOrderInt, name='buy_sellOrder')
+    quant = quantityToDf(series, quantity, name="quant")
+    PandLTemp = multiply(buy_sellOrder, series, name="PandLTemp")
+    profit_and_loss = multiply(PandLTemp, quant, name='profit_and_loss')
+    profit_and_loss2 = replaceTimeColumnDf(profit_and_loss, series, name='profit_and_loss2')
+    sum_Profit_Loss = columnSumDf(profit_and_loss2, name='sum_Profit_Loss')
+    return dataFrame({'buy_sellOrder': buy_sellOrder, 'profit_and_loss': profit_and_loss2, 'sum_Profit_Loss': sum_Profit_Loss}, name='df')
+
 @module
 def simple_3SMA_Strategy(series: Series, shortestWindow: int=None, shortWindow: int=None, longWindow: int=None, name: str=None) -> DataFrame:
     sma_shortest = sma(series, shortestWindow, name="shortest")

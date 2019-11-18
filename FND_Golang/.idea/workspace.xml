@@ -3,8 +3,10 @@
   <component name="ChangeListManager">
     <list default="true" id="3bbcbd02-91e9-4cde-8576-4e9671b7f54b" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/../FND.py" beforeDir="false" afterPath="$PROJECT_DIR$/../FND.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main/FND_Compiler.go" beforeDir="false" afterPath="$PROJECT_DIR$/main/FND_Compiler.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main/RollingDeque.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../PandasBE/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/../PandasBE/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Test/forex-tiny-ez.csv" beforeDir="false" afterPath="$PROJECT_DIR$/../Test/forex-tiny-ez.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Test/test_TeoPrims.py" beforeDir="false" afterPath="$PROJECT_DIR$/../Test/test_TeoPrims.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../primitiveBE.py" beforeDir="false" afterPath="$PROJECT_DIR$/../primitiveBE.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -90,7 +92,9 @@
       <map>
         <entry key="MAIN">
           <value>
-            <State />
+            <State>
+              <option name="COLUMN_ORDER" />
+            </State>
           </value>
         </entry>
       </map>

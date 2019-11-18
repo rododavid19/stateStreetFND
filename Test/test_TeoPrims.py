@@ -173,55 +173,22 @@ class testNetwork_ColumnMethods(unittest.TestCase):
             self.assertRaises(Exception, piEval, n, sourceDict)
 
 class testNetwork_SIMPLESMASTRATEGYTESTS(unittest.TestCase):
-    def test_SIMPLE2SMA_MINI(self):
-        #Checks to make sure columnNames is a string
+    def test_SIMPLE2SMA_NOV2019TICK(self):
         with Network() as n:
             forex = pd.read_csv("DAT_ASCII_EURUSD_T_201910.csv")
             sourceDict = {'forex': forex}
             df = seriesSource('forex')
-            simple_2SMA_Strategy(df, shortWindow=10, longWindow=100, name='2SMA')
+            simple_2SMA_Strategy(df, shortWindow=50, longWindow=200, quantity=1, name='2SMA')
             sinkDict = piEval(n, sourceDict)
-            buyOrder = sinkDict.get('2SMA/buyOrder')
-            noOrder = sinkDict.get('2SMA/noOrder')
-            profit_and_loss = forex.copy()
             n.report()
-            for index, row in noOrder.iterrows():
-                # for col in list(noOrder):
-                #     if col == list(noOrder)[0]:
-                #         continue
-                count = 0
-                for elem in row:
-                    count = count + 1
-                    dataRow = profit_and_loss[index:index + 1]
-                    if type(elem) is bool:
-                        if elem == True:
-                            dataRow.iloc[0, count] = 0.00
-                            continue #noOrder is true
-                        buyRow = buyOrder[index:index+1]
-                        buyTemp = buyRow.iloc[0,count - 1]
-                        if not(type(buyTemp) is np.bool_):
-                            continue
-                        dataTemp = dataRow.iloc[0,count]
-                        if type(dataTemp) is str:
-                            continue
-                        if buyTemp == True:
-                            dataRow.iloc[0, count] = dataTemp * -5#TODO change 20 to '-n' stocks
-                            #execute buy order for n stocks
-                        else:
-                            dataRow.iloc[0, count] = dataTemp * 5#TODO change -20 to 'n' stocks
-                            #execute sell order for n stocks
-                                #end if
-                            #end for
-                        #end else
-                    #end if
-                #end for
-            #end for
-            col_list = list(profit_and_loss)
-            profit_summary = {}
-            for col in col_list:
-                if col == col_list[0]:
-                    continue #Date time column or index column by convention
-                profit_summary[col] = profit_and_loss[col].values.sum()
+
+    def test_SIMPLE2SMA_TINY_EZ(self):
+        with Network() as n:
+            forex = pd.read_csv("forex-tiny-ez.csv")
+            sourceDict = {'forex': forex}
+            df = seriesSource('forex')
+            simple_2SMA_Strategy(df, shortWindow=1, longWindow=2, quantity=1, name='2SMA')
+            sinkDict = piEval(n, sourceDict)
             n.report()
 
     def test_SIMPLE3SMA_MINI(self):
