@@ -35,6 +35,7 @@ order_ID = 0
 
 locks = [ ]
 FOREX = [ ]
+data_lock = threading.Lock()
 
 
 
@@ -61,17 +62,28 @@ class TestApp(EWrapper, EClient):
             global FOREX
             global order_ID
             global locks
+            global data_lock
 
             lock = locks[reqId]
             print("locking ", reqId)
             with lock:
                 arrived = str(open_) + " " + str(high) + " " + str(low) + " " + str(close)
                 print(" Open: " + str(open_) + " High: " + str(high) + " Low: " + str(low) + " Close: " + str(close))
+
+
+                data_lock.acquire()
                 if len(FOREX) == 0:
-                    FOREX.append(arrived)
+                    FOREX.insert( reqId,arrived)
                 else:
-                    FOREX[reqId] += arrived
-                print("FOREX: ", FOREX[reqId] )
+                    try:
+                        FOREX.insert(reqId, arrived)
+                        #print("FOREX: ", FOREX[reqId], '\n')
+                    except:
+                        print("Attempted to access Forex[", reqId, "] but it does not exist. It's current lenght is ",
+                              len(FOREX))
+                data_lock.release()
+
+                #print("FOREX: ", FOREX[reqId] )
                 print("unlocking ", reqId)
                 lock.notifyAll()
 
@@ -122,9 +134,9 @@ def interactiveBrokers(symbol:str, secType:str, currency:str, exchange:str, orde
     contract.exchange = exchange
     #app.reqMarketDataType(4)
     print("Requesting IB contract by id" , orderID )
-    queryTime = (datetime.datetime.today() - datetime.timedelta(days=179)).strftime("%Y%m%d %H:%M:%S")
-    app.reqHistoricalData(int(orderID), contract, queryTime,"1 M", "1 day", "MIDPOINT", 1, 1, False, [] )
-   # app.reqRealTimeBars(int(orderID), contract, 5, "MIDPOINT", False, [])
+    # queryTime = (datetime.datetime.today() - datetime.timedelta(days=179)).strftime("%Y%m%d %H:%M:%S")
+    # app.reqHistoricalData(int(orderID), contract, queryTime,"1 M", "1 day", "MIDPOINT", 1, 1, False, [] )
+    app.reqRealTimeBars(int(orderID), contract, 5, "MIDPOINT", False, [])
     app.run()
 
 
@@ -159,18 +171,21 @@ class ThreadedUDPRequestHandler(socketserver.BaseRequestHandler):
 def client_sink(id:int, socket, client_address ):
     global locks
     global FOREX
+    global data_lock
     lock = locks[id]
     while(True):
         with lock:
             print("Sender Locking ", id, " at time: " , datetime.datetime.today(),'\n',)
             lock.wait()
             print("Sender UNLOCKING ", id,  " at time: " , datetime.datetime.today(), '\n',)
+            data_lock.acquire()
             try:
                 print(id, " is SENDING ", FOREX[id], '\n')
                 socket.sendto(bytes(FOREX[id].encode("utf-8")), client_address)
             except:
                 print(" FOREX index incorrect attempted on index: ", id, '\n' )
             FOREX[id] = ""
+            data_lock.release()
 
 
 class ThreadedUDPServer(socketserver.ThreadingMixIn, socketserver.UDPServer):   # is declaration necessary?
