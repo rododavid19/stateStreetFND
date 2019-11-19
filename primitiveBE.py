@@ -128,14 +128,13 @@ def LE(p):
     b = p.arguments["b"].parent.arguments.data
 
     if type(a) and type(b) is pd.DataFrame:
-        p.arguments.data = pd.DataFrame.le(a, b)
+        p.arguments.data = pd.DataFrame.le(a,b)
     if type(a) and type(b) is pd.Series:
         p.arguments.data = pd.Series.le(a, b)
 
 def EQ(p):
     a = p.arguments["a"].parent.arguments.data
     b = p.arguments["b"].parent.arguments.data
-
     if type(a) and type(b) is pd.DataFrame:
         p.arguments.data = pd.DataFrame.eq(a, b)
     if type(a) and type(b) is pd.Series:
@@ -181,14 +180,29 @@ def PRICECEILING(p):
         p.arguments.data = np.ceil(a)
 
 def ANDDF(p):
-    a = p.arguments['a'].parent.argument.data
-    b = p.arguments['b'].parent.argument.data
+    a = p.arguments['a'].parent.arguments.data
+    b = p.arguments['b'].parent.arguments.data
     p.arguments.data = a & b
 
 def ORDF(p):
-    a = p.arguments['a'].parent.argument.data
-    b = p.arguments['b'].parent.argument.data
+    a = p.arguments['a'].parent.arguments.data
+    b = p.arguments['b'].parent.arguments.data
     p.arguments.data = a | b
+
+def DFBOOLTOINT(p):
+    a = p.arguments['a'].parent.arguments.data
+    toRet = a.astype(int)
+    p.arguments.data = toRet
+
+def QUANTITYTODF(p):
+    a = p.arguments['a'].parent.arguments.data
+    quantity = p.arguments['quantity']
+    toRet = a.copy()
+    for col in toRet.columns:
+        if col == toRet.columns[0]:
+            continue
+        toRet[col].values[:] = quantity
+    p.arguments.data = toRet
 
 def ADDTICKS(p):
    #Todo Figure out how to add ticks to series objects
@@ -294,6 +308,31 @@ def PUTCOLUMNS(p):
         p.arguments.data = newdf
     except:
         raise Exception("Error appending columns to newDF, make sure indices align correctly")
+
+def REPLACETIMECOLUMNDF(p):
+    #Replaces the timeDate column of a with the timeDate Column of b, and also places it that column in the leftmost index
+    a = p.arguments['a'].parent.arguments.data
+    b = p.arguments['b'].parent.arguments.data
+    toRet = a.copy()
+    colNames = b.columns
+    toRet[colNames[0]] = b[colNames[0]]
+    toRet = toRet[colNames]
+    p.arguments.data = toRet
+
+def COLUMNSUMDF(p):
+    a = p.arguments['a'].parent.arguments.data
+    toRet = pd.DataFrame(columns=a.columns)
+    toRetDict = []
+    for col in a.columns:
+        if col == a.columns[0]:
+            continue
+        sum = a[col].values.sum()
+        toRetDict.append(sum)
+    for i in range(len(toRet.columns)):
+        if i == 0:
+            continue
+        toRet.loc[0, toRet.columns[i]] = toRetDict[i - 1]
+    p.arguments.data = toRet
 
 def TIMEWEIGHTMEAN(p):
     s = p.arguments['series'].parent.arguments.data
@@ -554,10 +593,3 @@ def INTERVALCOUNT(p):
     if type(a) is pd.Series:
         p.arguments.data = pd.Series(rolling.count())
 
-
-        #def DELAY(p):
-#    a = p.arguments["a"].parent.arguments.data
-#    if type(a) is pd.DataFrame:
-#        p.arguments.data = pd.DataFrame(a).shift()
-#    if type(a) is pd.Series:
-#        p.arguments.data = pd.Series(a).shift()

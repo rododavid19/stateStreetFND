@@ -75,6 +75,11 @@ PRIMITIVE_MAP = {
     "intervalCount": INTERVALCOUNT,
     "andDF": ANDDF,
     "orDF": ORDF,
+    'dfBoolToInt': DFBOOLTOINT,
+    'quantityToDf': QUANTITYTODF,
+    'replaceTimeColumnDf': REPLACETIMECOLUMNDF,
+    'columnSumDf' : COLUMNSUMDF,
+
 
   #  SeriesSink: PandasImmediate.seriesSink,
    # DataFrameSink: PandasImmediate.dataFrameSink,
