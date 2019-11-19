@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"net"
 	"sync"
@@ -201,7 +202,7 @@ func seriesSource(source string, priceType string ) *Receiver {
 	handlers[source] = composer
 	composer.name = source
 
-	go sinkSource(&composer, source + " " + priceType)
+	go sinkSource(&composer, source)  // TODO: not attaching priceType yet.
 
 	listener := composer.Listen()
 	listener.name = source +  " " + priceType
@@ -218,21 +219,26 @@ func sinkSource( composer *Broadcaster, contract string){
 
 	var hostName = "127.0.0.1"
 	var portNum =  "19192"
-	var service = hostName + ":" + portNum
-	var RemoteAddr, _ = net.ResolveUDPAddr("udp", service)
+	//var service = hostName + ":" + portNum
+	//var RemoteAddr, _ = net.ResolveUDPAddr("udp", service)
 	println("Starting port: " , portNum)
-	var conn, _ = net.DialUDP("udp", nil, RemoteAddr)
-
+	var conn, _ = net.Dial("tcp", hostName + ":"+ portNum)
 
 	message := []byte(contract)  // specify contract details, max period,
 	_, _ = conn.Write(message)
 
+	barrier.Add(1)
+
 	for{
-		buffer := make([]byte, 512)
-		data, _, _ := conn.ReadFromUDP(buffer)
-		if data > 0{ }
-		data_s := string(buffer[:])
-		composer.Write(data_s)
+
+		// send to socket
+		fmt.Fprintf(conn, "")
+		// listen for reply
+		server_data, err := bufio.NewReader(conn).ReadString('$')
+
+		if (err == nil){
+			composer.Write(server_data)
+		}
 	}
 
 }

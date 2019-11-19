@@ -25,6 +25,7 @@ import random
 import socket
 import socketserver
 from multiprocessing import Process
+import queue
 
 
 marketData = ""
@@ -33,9 +34,9 @@ loop_flag = False
 dataArrived = False
 order_ID = 0
 
-locks = [ ]
-FOREX = [ ]
-data_lock = threading.Lock()
+locks = [""]
+FOREX = [""]
+id_lock = threading.Lock()
 
 
 
@@ -47,15 +48,6 @@ class TestApp(EWrapper, EClient):
     def error(self, reqId:TickerId, errorCode:int, errorString:str):
         print("Error:", reqId, " ", errorCode, " ", errorString)
 
-    def tickPrice(self, reqId:TickerId , tickType:TickType, price:float, attrib:TickAttrib):
-        global dataArrived
-        global FOREX
-        global order_ID
-        dataArrived = True
-        arrived = TickTypeEnum.to_str(tickType) + "Price: " + str(price) + " "
-        # Tick Price. Ticket ID: " + str(reqId) + "
-        FOREX += arrived
-        order_ID += 1
 
     def realtimeBar(self, reqId: TickerId, time:int, open_: float, high: float, low: float, close: float, volume: int, wap: float, count: int):
             super().realtimeBar(reqId, time, open_, high, low, close, volume, wap, count)
@@ -67,24 +59,25 @@ class TestApp(EWrapper, EClient):
             lock = locks[reqId]
             print("locking ", reqId)
             with lock:
-                arrived = str(open_) + " " + str(high) + " " + str(low) + " " + str(close)
+
+                #data_lock.acquire()
+                arrived = str(datetime.datetime.utcfromtimestamp(time).strftime('%Y-%m-%d %H:%M:%S')) + " " + str(open_) + " " + str(high) + " " + str(low) + " " + str(close) + "$"
                 print(" Open: " + str(open_) + " High: " + str(high) + " Low: " + str(low) + " Close: " + str(close))
-
-
-                data_lock.acquire()
-                if len(FOREX) == 0:
-                    FOREX.insert( reqId,arrived)
-                else:
-                    try:
-                        FOREX.insert(reqId, arrived)
-                        #print("FOREX: ", FOREX[reqId], '\n')
-                    except:
-                        print("Attempted to access Forex[", reqId, "] but it does not exist. It's current lenght is ",
-                              len(FOREX))
-                data_lock.release()
+                FOREX.insert(reqId, arrived)
+                # if len(FOREX) == 0:
+                #     FOREX.insert(reqId, arrived)
+                # else:
+                #     try:
+                #         #FOREX.insert(reqId, " ")
+                #         FOREX.insert(reqId, arrived)
+                #         #print("FOREX: ", FOREX[reqId], '\n')
+                #     except:
+                #         print("Attempted to access Forex[", reqId, "] but it does not exist. It's current lenght is ",
+                #               len(FOREX))
+                #data_lock.release()
 
                 #print("FOREX: ", FOREX[reqId] )
-                print("unlocking ", reqId)
+                print("Notifying  ", reqId  )
                 lock.notifyAll()
 
     def historicalData(self, reqId: int, bar: BarData):
@@ -121,7 +114,6 @@ class TestApp(EWrapper, EClient):
         print(status)
 
 
-
 def interactiveBrokers(symbol:str, secType:str, currency:str, exchange:str, orderID:str):
     app = TestApp()
     app.connect("127.0.0.1", 7497, orderID)
@@ -134,38 +126,64 @@ def interactiveBrokers(symbol:str, secType:str, currency:str, exchange:str, orde
     contract.exchange = exchange
     #app.reqMarketDataType(4)
     print("Requesting IB contract by id" , orderID )
+
     # queryTime = (datetime.datetime.today() - datetime.timedelta(days=179)).strftime("%Y%m%d %H:%M:%S")
     # app.reqHistoricalData(int(orderID), contract, queryTime,"1 M", "1 day", "MIDPOINT", 1, 1, False, [] )
     app.reqRealTimeBars(int(orderID), contract, 5, "MIDPOINT", False, [])
+    # order = Order()
+    # order.action = "BUY"
+    # order.orderType = "MKT"
+    # order.totalQuantity = 20
+    # #order.lmtPrice = 0.68095
+    # app.placeOrder(69, contract, order)
     app.run()
 
 
 
-class ThreadedUDPRequestHandler(socketserver.BaseRequestHandler):
+class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
 
     def handle(self):
         global FOREX
         global dataArrived
         global order_ID
         global locks
+        global id_lock
+
+
+        id_lock.acquire()
         local_id = order_ID
         print("NEW CLIENT: ", order_ID , '\n')
-        recieved = self.request[0].strip()
-        request = str.split(recieved.decode("utf-8"))
-        socket = self.request[1]
 
-        IB_args = request[:request.__len__()-1]
-        req_id = order_ID
-        IB_args.append(req_id)
-        print("starting IB with id ", req_id, '\n')
+
+
+
+
+        # recieved = self.request[0].strip()
+        # request = str.split(recieved.decode("utf-8"))
+        # socket = self.request[1]
+
+        client_request = self.request.recv(1024)
+        print(client_request)
+
+        IB_args = client_request[:client_request.__len__()]
+        IB_args = IB_args.decode("utf-8")
+        IB_args = str.split(IB_args)
+        IB_args.append(local_id)
+        print("starting IB with id ", local_id, '\n')
         IB_thread = threading.Thread(target=interactiveBrokers, args=IB_args)
-        clientSink_args = [local_id, socket, self.client_address ]
-        clientSink_thread = threading.Thread(target=client_sink, args=clientSink_args)
         lock = threading.Condition()
-        locks.append(lock)
-        IB_thread.start()
-        clientSink_thread.start()
+        locks.insert(local_id, lock)
         order_ID += 1
+        IB_thread.start()
+        id_lock.release()
+
+        while(True):
+            with lock:
+                lock.wait()
+                print( local_id, " is sending ", FOREX[local_id] )
+                self.request.sendall(bytes(FOREX[local_id].encode("utf-8")))
+                FOREX[local_id] = ""
+
 
 
 def client_sink(id:int, socket, client_address ):
@@ -173,27 +191,29 @@ def client_sink(id:int, socket, client_address ):
     global FOREX
     global data_lock
     lock = locks[id]
+
     while(True):
         with lock:
-            print("Sender Locking ", id, " at time: " , datetime.datetime.today(),'\n',)
+            #print("Sender Locking ", id, " at time: " , datetime.datetime.today(),'\n',)
             lock.wait()
-            print("Sender UNLOCKING ", id,  " at time: " , datetime.datetime.today(), '\n',)
             data_lock.acquire()
+            #print("Sender UNLOCKING ", id,  " at time: " , datetime.datetime.today(), '\n',)
             try:
+
                 print(id, " is SENDING ", FOREX[id], '\n')
                 socket.sendto(bytes(FOREX[id].encode("utf-8")), client_address)
             except:
-                print(" FOREX index incorrect attempted on index: ", id, '\n' )
-            FOREX[id] = ""
+                print(" FOREX index incorrect attempted on index: ", id, " and FOREX has, " , FOREX )
             data_lock.release()
 
 
-class ThreadedUDPServer(socketserver.ThreadingMixIn, socketserver.UDPServer):   # is declaration necessary?
+class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):   # is declaration necessary?
     pass
 
 def serverLaunch():
     HOST, PORT = "127.0.0.1", 19192
-    server = socketserver.UDPServer( (HOST,PORT), ThreadedUDPRequestHandler)
+    server = ThreadedTCPServer( (HOST,PORT), ThreadedTCPRequestHandler)
+
 
     with server:
         ip, port = server.server_address
@@ -211,6 +231,14 @@ def serverLaunch():
 if __name__ == "__main__":
     serverLaunch()
 
+
+
+# TODO: UDPServer to TCPServer
+# TODO: Broker function called by TCP handler
+# TODO: Golang request parser
+# TODO: P&L plotting function.  https://matplotlib.org/gallery/style_sheets/dark_background.html#sphx-glr-gallery-style-sheets-dark-background-py
+# TODO: FOREX data time synchronization?
+#TODO: add Same Source checkers in prim_eval funcs in golang
 
 
 
