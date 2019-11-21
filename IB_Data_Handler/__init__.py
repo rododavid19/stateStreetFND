@@ -21,7 +21,10 @@ from ibapi.order import *
 from ibapi.order_state import *
 import csv
 import random
-
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+from matplotlib import style
+import numpy as np
 import socket
 import socketserver
 from multiprocessing import Process
@@ -34,11 +37,23 @@ loop_flag = False
 dataArrived = False
 order_ID = 0
 
+
+#PNLPLOT
+tempNow = datetime.datetime.now()
+pnlVars = [0, 0.0, 0.0, 0.0]
+#Daily_PnL_Vals = [0.0]
+#Daily_PnL_Time = [tempNow]
+Daily_PnL_Vals = []
+Daily_PnL_Time = []
+line1 = []
+LineLock = []
+#PNLPLOT
+
+
+
 locks = [""]
 FOREX = [""]
 id_lock = threading.Lock()
-
-
 
 class TestApp(EWrapper, EClient):
     def __init__(self):
@@ -114,7 +129,47 @@ class TestApp(EWrapper, EClient):
         print(status)
 
 
+    def pnl(self, reqId: int, dailyPnL: float, unrealizedPnL: float, realizedPnL: float):
+        global Daily_PnL_Time
+        global Daily_PnL_Vals
+        global line1
+        super().pnl(reqId, dailyPnL, unrealizedPnL, realizedPnL)
+        Daily_PnL_Vals.append(dailyPnL)
+        Daily_PnL_Time.append(datetime.datetime.now())
+        line1 = self.graphIt()
+        print("Daily PnL. ReqId:", reqId, "DailyPnL:", dailyPnL,
+              "UnrealizedPnL:", unrealizedPnL, "RealizedPnL:", realizedPnL)
+
+    def graphIt(self):
+        global line1
+        global LineLock
+        global Daily_PnL_Time
+        global Daily_PnL_Vals
+        if LineLock[0]:
+            LineLock[0] = False
+            # this is the call to matplotlib that allows dynamic plotting
+            plt.ion()
+            fig = plt.figure(figsize=(13, 6))
+            ax = fig.add_subplot(111)
+            # create a variable for the line so we can later update it
+            line1, = ax.plot(Daily_PnL_Time, Daily_PnL_Vals, '-o', alpha=0.8)
+            # update plot label/title
+            plt.ylabel('USD')
+            plt.title('Daily Profit and Loss')
+            plt.show()
+        else:
+            line1.set_data(Daily_PnL_Time, Daily_PnL_Vals)
+            plt.xlim(np.min(Daily_PnL_Time), np.max(Daily_PnL_Time))
+            if np.min(Daily_PnL_Vals) <= line1.axes.get_ylim()[0] or np.max(Daily_PnL_Vals) >= line1.axes.get_ylim()[1]:
+                plt.ylim(
+                    [np.min(Daily_PnL_Vals) - np.std(Daily_PnL_Vals), np.max(Daily_PnL_Vals) + np.std(Daily_PnL_Vals)])
+            plt.pause(.01)
+        return line1
+
 def interactiveBrokers(symbol:str, secType:str, currency:str, exchange:str, orderID:str):
+    global line1
+    global LineLock
+    LineLock.append(True)
     app = TestApp()
     app.connect("127.0.0.1", 7497, orderID)
     time.sleep(.0000000000001)  # TODO: report bug to IB repo. or daemon?
@@ -126,10 +181,13 @@ def interactiveBrokers(symbol:str, secType:str, currency:str, exchange:str, orde
     contract.exchange = exchange
     #app.reqMarketDataType(4)
     print("Requesting IB contract by id" , orderID )
-
     # queryTime = (datetime.datetime.today() - datetime.timedelta(days=179)).strftime("%Y%m%d %H:%M:%S")
     # app.reqHistoricalData(int(orderID), contract, queryTime,"1 M", "1 day", "MIDPOINT", 1, 1, False, [] )
     app.reqRealTimeBars(int(orderID), contract, 5, "MIDPOINT", False, [])
+    #TODO Make sure to change acctcode from being hardcoded
+    app.reqAccountUpdates(subscribe=True, acctCode="DU230004")
+    app.reqPnL(17001, "DU230004", "")
+    app.pnl(pnlVars[0], pnlVars[1], pnlVars[2], pnlVars[3])
     # order = Order()
     # order.action = "BUY"
     # order.orderType = "MKT"
@@ -199,7 +257,6 @@ def client_sink(id:int, socket, client_address ):
             data_lock.acquire()
             #print("Sender UNLOCKING ", id,  " at time: " , datetime.datetime.today(), '\n',)
             try:
-
                 print(id, " is SENDING ", FOREX[id], '\n')
                 socket.sendto(bytes(FOREX[id].encode("utf-8")), client_address)
             except:
