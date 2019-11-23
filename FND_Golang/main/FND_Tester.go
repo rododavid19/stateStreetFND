@@ -28,11 +28,16 @@ func py(request string ) {
 
 func main(){
 
-	GTE(SMA(seriesSource("EUR CASH USD IDEALPRO", "close"), 2, "short"),
-		SMA(seriesSource("EUR CASH USD IDEALPRO", "close"), 8, "long"), "2-SMA-STRATEGY")
+	//GTE(SMA(seriesSource("EUR CASH USD IDEALPRO", "close"), 2, "short"),
+	//	SMA(seriesSource("EUR CASH USD IDEALPRO", "close"), 8, "long"), "2-SMA-STRATEGY")
+
+	short := SMA(seriesSource("EUR CASH USD IDEALPRO", "close"), 2, "short")
+	long := SMA(seriesSource("EUR CASH USD IDEALPRO", "close"), 8, "long")
+	sellOrder := GTE(short, long, "sellOrder")
+	buyOrder := GTE(long, short, "buyOrder")
+	SUBTRACT(sellOrder, buyOrder, "buy or sell?")
 	time.Sleep(1)
 	barrier.Wait()
-
 }
 
 

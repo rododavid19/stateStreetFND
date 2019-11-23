@@ -136,6 +136,7 @@ class TestApp(EWrapper, EClient):
         super().pnl(reqId, dailyPnL, unrealizedPnL, realizedPnL)
         Daily_PnL_Vals.append(dailyPnL)
         Daily_PnL_Time.append(datetime.datetime.now())
+
         line1 = self.graphIt()
         print("Daily PnL. ReqId:", reqId, "DailyPnL:", dailyPnL,
               "UnrealizedPnL:", unrealizedPnL, "RealizedPnL:", realizedPnL)
@@ -167,9 +168,9 @@ class TestApp(EWrapper, EClient):
         return line1
 
 def interactiveBrokers(symbol:str, secType:str, currency:str, exchange:str, orderID:str):
-    global line1
-    global LineLock
-    LineLock.append(True)
+    #global line1
+    #global LineLock
+    #LineLock.append(True)
     app = TestApp()
     app.connect("127.0.0.1", 7497, orderID)
     time.sleep(.0000000000001)  # TODO: report bug to IB repo. or daemon?
@@ -181,13 +182,13 @@ def interactiveBrokers(symbol:str, secType:str, currency:str, exchange:str, orde
     contract.exchange = exchange
     #app.reqMarketDataType(4)
     print("Requesting IB contract by id" , orderID )
-    # queryTime = (datetime.datetime.today() - datetime.timedelta(days=179)).strftime("%Y%m%d %H:%M:%S")
-    # app.reqHistoricalData(int(orderID), contract, queryTime,"1 M", "1 day", "MIDPOINT", 1, 1, False, [] )
-    app.reqRealTimeBars(int(orderID), contract, 5, "MIDPOINT", False, [])
+    queryTime = (datetime.datetime.today() - datetime.timedelta(days=179)).strftime("%Y%m%d %H:%M:%S")
+    app.reqHistoricalData(int(orderID), contract, queryTime,"1 M", "1 day", "MIDPOINT", 1, 1, False, [] )
+    #app.reqRealTimeBars(int(orderID), contract, 5, "MIDPOINT", False, [])
     #TODO Make sure to change acctcode from being hardcoded
     app.reqAccountUpdates(subscribe=True, acctCode="DU230015")
-    app.reqPnL(17001, "DU230015", "")
-    app.pnl(pnlVars[0], pnlVars[1], pnlVars[2], pnlVars[3])
+    #app.reqPnL(17001, "DU230015", "")
+    #app.pnl(pnlVars[0], pnlVars[1], pnlVars[2], pnlVars[3])
     # order = Order()
     # order.action = "BUY"
     # order.orderType = "MKT"

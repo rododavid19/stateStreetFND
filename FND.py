@@ -587,6 +587,7 @@ def simple_2SMA_Strategy(series: Series, shortWindow: int=None, longWindow: int=
     #return dataFrame({'buy_sellOrder': buy_sellOrder, 'profit_and_loss': profit_and_loss2, 'sum_Profit_Loss': sum_Profit_Loss}, name='df')
     return dataFrame({'buy_sellOrder': buy_sellOrder})
 
+
 @module
 def simple_3SMA_Strategy(series: Series, shortestWindow: int=None, shortWindow: int=None, longWindow: int=None, name: str=None) -> DataFrame:
     sma_shortest = sma(series, shortestWindow, name="shortest")

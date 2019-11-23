@@ -25,6 +25,7 @@ def SUBTRACT(p):
         a = p.arguments["a"].parent.arguments.data
         b = p.arguments["b"].parent.arguments.data
 
+
         if type(a) and type(b) is pd.DataFrame:
             p.arguments.data = pd.DataFrame(a - b)
         if type(a) and type(b) is pd.Series:
