@@ -75,8 +75,6 @@ func ADD(a *Receiver, b *Receiver) Receiver{
 }
 
 func add_eval(source_a *Receiver, source_b *Receiver, output *Broadcaster, id string){
-
-
 	if( source_a == source_b){
 		for b := source_b.Read(); b != nil; b = source_b.Read() {
 			data_b := fmt.Sprintf("%v", b)
@@ -84,32 +82,17 @@ func add_eval(source_a *Receiver, source_b *Receiver, output *Broadcaster, id st
 		}
 
 	}
-
-
-
 	for a := source_a.Read(); a != nil; a = source_a.Read() {
-
-
 		for b := source_b.Read(); b != nil; {
 			data_a := fmt.Sprintf("%v", a)
 			data_b := fmt.Sprintf("%v", b)
 			println(  "ADD: ", id, " ", data_a,  " + " + data_b )
 			break
 		}
-
-
-
 	}
-
-
-
 }
 
-
-
 //TODO: add mapping of priceType string to index in
-
-
 
 func SMA( seriesSource *Receiver, window int, optionalName string ) *Receiver {
 
@@ -132,6 +115,41 @@ func SMA( seriesSource *Receiver, window int, optionalName string ) *Receiver {
 
 	}
 	//defer barrier.Done()
+
+func boolToInt(seriesSource *Receiver, optionalName string) *Receiver {
+	if _, ok := compiler_handlers[optionalName]; ok {
+
+		listener := compiler_handlers[optionalName].Listen()
+		return &listener
+	}
+
+	composer := NewBroadcaster()
+	compiler_handlers[optionalName] = composer
+
+	fmt.Println( optionalName + " created at ", time.Now()  );
+	go boolToInt_eval(seriesSource,&composer, optionalName)
+
+	listener := composer.Listen()
+	listener.name = optionalName
+	return &listener
+}
+
+func boolToInt_eval(source *Receiver, output *Broadcaster, id string){
+	barrier.Add(1)
+	r := source
+	for v := r.Read(); v != nil; v = r.Read() {
+		b, err := strconv.ParseBool(v.(string))
+		if err == nil{
+			bitSetVar := int8(0)
+			if b {
+				bitSetVar = 1
+			}
+			output.Write(bitSetVar)
+		}
+		fmt.Println(id, " RECEIVED at time ", time.Now()   , " from receiver ", source.name  ); //v);
+	}
+}
+
 
 
 

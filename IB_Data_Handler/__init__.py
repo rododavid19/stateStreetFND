@@ -185,8 +185,8 @@ def interactiveBrokers(symbol:str, secType:str, currency:str, exchange:str, orde
     # app.reqHistoricalData(int(orderID), contract, queryTime,"1 M", "1 day", "MIDPOINT", 1, 1, False, [] )
     app.reqRealTimeBars(int(orderID), contract, 5, "MIDPOINT", False, [])
     #TODO Make sure to change acctcode from being hardcoded
-    app.reqAccountUpdates(subscribe=True, acctCode="DU230004")
-    app.reqPnL(17001, "DU230004", "")
+    app.reqAccountUpdates(subscribe=True, acctCode="DU230015")
+    app.reqPnL(17001, "DU230015", "")
     app.pnl(pnlVars[0], pnlVars[1], pnlVars[2], pnlVars[3])
     # order = Order()
     # order.action = "BUY"
