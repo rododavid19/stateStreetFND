@@ -22,175 +22,114 @@ var price_map = map[string]int{
 	"close" : 3,
 }
 
-func SUBTRACT(a *Receiver, b *Receiver, optionalName string) Receiver{
-
-
-
-	subToString := a.name + " - " + b.name
-
-	if _, ok := compiler_handlers[subToString]; ok {
-
-		listener := compiler_handlers[subToString].Listen()
-		return listener
+func SUBTRACT(a *Receiver, b *Receiver, optionalName string ) *Receiver {
+	if _, ok := compiler_handlers[optionalName]; ok {
+		listener := compiler_handlers[optionalName].Listen()
+		return &listener
 	}
-
-
-
-	if _, ok := registered_recievers[a.name]; ok {
-		list := compiler_handlers[a.name].Listen()
-		list.name = a.name
-		a = &list
-	}
-
-	if _, ok := registered_recievers[b.name]; ok {
-
-		if a!= b{
-			list := compiler_handlers[b.name].Listen()
-			list.name = b.name
-			b = &list
-		}
-
-	}
-
-	registered_recievers[a.name] = true
-	if a != b {
-		registered_recievers[b.name] = true
-	}
-
-
-
 	composer := NewBroadcaster()
-	compiler_handlers[subToString] = composer
-
-	fmt.Println( "SUBTRACT" + subToString + " created at ", time.Now())
-	go subtract_eval( a, b, &composer, subToString, optionalName)
-
+	compiler_handlers[optionalName] = composer
+	fmt.Println(optionalName + " created at ", time.Now());
+	go subtract_eval(a, b, &composer, optionalName)
 	listener := composer.Listen()
-
-
-
-	return listener
-
-
+	listener.name = optionalName
+	return &listener
 }
 
-func subtract_eval(source_a *Receiver, source_b *Receiver, output *Broadcaster, id string, optionalName string){
-
-
+func subtract_eval(source_a *Receiver, source_b *Receiver, output *Broadcaster, id string){
 	if( source_a == source_b){
 		for b := source_b.Read(); b != nil; b = source_b.Read() {
 			data_b := fmt.Sprintf("%v", b)
 			println("SAME SOURCE SUBTRACT prim is subtracting: " + data_b + " - " + data_b )
 			output.Write(0)
 		}
-
 	}
-
-
-
 	for a := source_a.Read(); a != nil; a = source_a.Read() {
-
-
 		for b := source_b.Read(); b != nil; {
+
 			data_a := fmt.Sprintf("%v", a)
 			data_b := fmt.Sprintf("%v", b)
-			a_float,_ := strconv.ParseFloat(data_a, 64)
-			b_float,_ := strconv.ParseFloat(data_b, 64)
+			fmt.Println(id, " RECEIVED a:", data_a," & b:", data_b, "at time ", time.Now()   , " from receiver ", source_a.name, "& from receiver ", source_b.name ); //v);
+			if data_a == "false" || data_a == "true"{
+				if data_b == "false" || data_b == "true"{
+					a_val := 0
+					b_val := 0
+					if data_a == "true"{
+						a_val = 1
+					}
+					if data_b == "true"{
+						b_val = 1
+					}
+					if a_val == 0 && b_val == 0{
+						fmt.Print("Error both inputs were 0")
+					}
+					ret_val := a_val - b_val
+					output.Write(ret_val)
+
+					fmt.Println("Data a: ", a_val, "Data b: ", b_val, "Result: ", ret_val)
+
+					break
+				}
+				fmt.Println("Error data_a is a boolean but data_b is not")
+			}
+			if data_b == "false" || data_b == "true"{
+				fmt.Println("Error data_b is a boolean but data_a is not")
+			}
+			a_float, _ := strconv.ParseFloat(data_a, 64)
+			b_float, _ := strconv.ParseFloat(data_b, 64)
 			ret_val := a_float - b_float
 			output.Write(ret_val)
-			fmt.Println("Data a: ",a_float, "Data b: ", b_float, "Result: ", ret_val)
+			fmt.Println("Data a: ", a_float, "Data b: ", b_float, "Result: ", ret_val)
 			break
 		}
-
-
-
 	}
-
-
-
 }
 
 func ADD(a *Receiver, b *Receiver) Receiver{
-
-
-
 	add_toSring := a.name + " + " + b.name
-
 	if _, ok := compiler_handlers[add_toSring]; ok {
-
 		listener := compiler_handlers[add_toSring].Listen()
 		return listener
 	}
-
-
-
 	if _, ok := registered_recievers[a.name]; ok {
 		list := compiler_handlers[a.name].Listen()
 		list.name = a.name
 		a = &list
 	}
-
 	if _, ok := registered_recievers[b.name]; ok {
-
 		if a!= b{
 			list := compiler_handlers[b.name].Listen()
 			list.name = b.name
 			b = &list
 		}
-
 	}
-
 	registered_recievers[a.name] = true
 	if a != b {
 		registered_recievers[b.name] = true
 	}
-
-
-
 	composer := NewBroadcaster()
 	compiler_handlers[add_toSring] = composer
-
 	fmt.Println( "ADD" + add_toSring + " created at ", time.Now()  );
 	go add_eval( a, b, &composer, add_toSring)
-
 	listener := composer.Listen()
-
-
-
 	return listener
-
-
 }
 
 func add_eval(source_a *Receiver, source_b *Receiver, output *Broadcaster, id string){
-
-
 	if( source_a == source_b){
 		for b := source_b.Read(); b != nil; b = source_b.Read() {
 			data_b := fmt.Sprintf("%v", b)
 			println("SAME SOURCE ADD prim is adding: " + data_b + " + " + data_b )
 		}
-
 	}
-
-
-
 	for a := source_a.Read(); a != nil; a = source_a.Read() {
-
-
 		for b := source_b.Read(); b != nil; {
 			data_a := fmt.Sprintf("%v", a)
 			data_b := fmt.Sprintf("%v", b)
 			println(  "ADD: ", id, " ", data_a,  " + " + data_b )
 			break
 		}
-
-
-
 	}
-
-
-
 }
 
 
@@ -266,14 +205,18 @@ func sma_eval( source *Receiver, output *Broadcaster, id string, window int) {
 		//		closePrices = append(closePrices, close_float)
 		//	}
 		//}
-
+		if id == "short"{
+			fmt.Println("sma_short_variables", closePrices, "resulted in ", ret_value)
+		} else if id == "long"{
+			fmt.Println("sma_long_variables", closePrices, "resulted in ", ret_value)
+		}
 		output.Write(ret_value)
-		fmt.Println(id, " RECEIVED at time ", time.Now()   , " from receiver ", source.name  ); //v);
+		fmt.Println(id, " RECEIVED at time ", time.Now()   , " from receiver ", source.name ); //v);
 	}
 	//TODO: use mapping of index to priceType to access correct data in data_split
 }
 
-func GTE(seriesSourceShort *Receiver, seriesSourceLong *Receiver, optionalName string ) *Receiver {
+func GTE(a *Receiver, b *Receiver, optionalName string ) *Receiver {
 
 	if _, ok := compiler_handlers[optionalName]; ok {
 
@@ -285,7 +228,7 @@ func GTE(seriesSourceShort *Receiver, seriesSourceLong *Receiver, optionalName s
 	compiler_handlers[optionalName] = composer
 
 	fmt.Println( optionalName + " created at ", time.Now()  );
-	go gte_eval(seriesSourceShort, seriesSourceLong, &composer, optionalName)
+	go gte_eval(a, b, &composer, optionalName)
 
 	listener := composer.Listen()
 	listener.name = optionalName
@@ -297,26 +240,28 @@ func GTE(seriesSourceShort *Receiver, seriesSourceLong *Receiver, optionalName s
 
 
 /* greater than only checks to see if the first source is greater than or equal the second*/
-func gte_eval(short *Receiver, long *Receiver, output *Broadcaster, id string) {
-
+func gte_eval(a *Receiver, b *Receiver, output *Broadcaster, id string) {
 	barrier.Add(1)
-
-	for long_read := long.Read(); long_read != nil; long_read = long.Read() {
-		short_read := short.Read()
-		fmt.Println(id, " RECEIVED at time ", time.Now()   , " from receiver ", short.name  ); //v);
-		fmt.Println(id, " RECEIVED at time ", time.Now()   , " from receiver ", long.name  ); //v);
-		data_long := fmt.Sprintf("%v", long_read)
-		if data_long == "NaN"{
+	for b_read := b.Read(); b_read != nil; b_read = b.Read() {
+		a_read := a.Read()
+		fmt.Println(id, " RECEIVED at time ", time.Now()   , " from A receiver ", a.name  ); //v);
+		fmt.Println(id, " RECEIVED at time ", time.Now()   , " from B receiver ", b.name  ); //v);
+		a_string := fmt.Sprintf("%v", a_read)
+		b_string := fmt.Sprintf("%v", b_read)
+		if a_string == "NaN" || b_string == "NaN"{
 			continue
 		}
-		short_float, _ := strconv.ParseFloat(fmt.Sprintf("%v", short_read), 64)
-		long_float, _ := strconv.ParseFloat(data_long, 64)
+		a_float, _ := strconv.ParseFloat(a_string, 64)
+		b_float, _ := strconv.ParseFloat(b_string, 64)
 
-		if short_float < long_float{
+		if a_float < b_float{
+			fmt.Println(id ," Calculated @ time, ",time.Now(), "variables: ", a_float, " < ", b_float, "results in: ", false)
 			output.Write(false)
 		} else {
+			fmt.Println(id ," Calculated @ time, ",time.Now(), "variables: ", a_float, " >= ", b_float, "results in: ", true)
 			output.Write(true)
 		}
+
 		//if short_float > long_float{
 		//	output.Write(1)
 		//	fmt.Println("short: ",short_float, "long: ", long_float, "action: SELL")

@@ -24,18 +24,12 @@ import random
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib import style
-import numpy as np
+
 import socket
 import socketserver
 from multiprocessing import Process
 import queue
-
-
-marketData = ""
-changeCount = 0
-loop_flag = False
-dataArrived = False
-order_ID = 0
+import numpy as np
 
 
 #PNLPLOT
@@ -50,10 +44,20 @@ LineLock = []
 #PNLPLOT
 
 
+marketData = ""
+changeCount = 0
+loop_flag = False
+dataArrived = False
+order_ID = 0
+
+demoAccountID = ""
 
 locks = [""]
 FOREX = [""]
+flags = [""]
 id_lock = threading.Lock()
+
+
 
 class TestApp(EWrapper, EClient):
     def __init__(self):
@@ -70,55 +74,107 @@ class TestApp(EWrapper, EClient):
             global order_ID
             global locks
             global data_lock
+            global flags
 
-            lock = locks[reqId]
-            print("locking ", reqId)
-            with lock:
+            # data_lock.acquire()
 
-                #data_lock.acquire()
-                arrived = str(datetime.datetime.utcfromtimestamp(time).strftime('%Y-%m-%d %H:%M:%S')) + " " + str(open_) + " " + str(high) + " " + str(low) + " " + str(close) + "$"
-                print(" Open: " + str(open_) + " High: " + str(high) + " Low: " + str(low) + " Close: " + str(close))
-                FOREX.insert(reqId, arrived)
-                # if len(FOREX) == 0:
-                #     FOREX.insert(reqId, arrived)
-                # else:
-                #     try:
-                #         #FOREX.insert(reqId, " ")
-                #         FOREX.insert(reqId, arrived)
-                #         #print("FOREX: ", FOREX[reqId], '\n')
-                #     except:
-                #         print("Attempted to access Forex[", reqId, "] but it does not exist. It's current lenght is ",
-                #               len(FOREX))
-                #data_lock.release()
 
-                #print("FOREX: ", FOREX[reqId] )
-                print("Notifying  ", reqId  )
-                lock.notifyAll()
+            arrived = str(datetime.datetime.utcfromtimestamp(time).strftime('%Y-%m-%d %H:%M:%S')) + " " + str(
+                open_) + " " + str(high) + " " + str(low) + " " + str(close) + "$"
+            print(" Open: " + str(open_) + " High: " + str(high) + " Low: " + str(low) + " Close: " + str(close))
+            FOREX.insert(reqId, arrived)
+            # if len(FOREX) == 0:
+            #     FOREX.insert(reqId, arrived)
+            # else:
+            #     try:
+            #         #FOREX.insert(reqId, " ")
+            #         FOREX.insert(reqId, arrived)
+            #         #print("FOREX: ", FOREX[reqId], '\n')
+            #     except:
+            #         print("Attempted to access Forex[", reqId, "] but it does not exist. It's current lenght is ",
+            #               len(FOREX))
+            # data_lock.release()
+
+            # print("FOREX: ", FOREX[reqId] )
+            print("Notifying  ", reqId)
+            flags.insert(reqId, True)
+
+            # lock = locks[reqId]
+            # print("locking ", reqId)
+            # with lock:
+            #
+            #     #data_lock.acquire()
+            #     arrived = str(datetime.datetime.utcfromtimestamp(time).strftime('%Y-%m-%d %H:%M:%S')) + " " + str(open_) + " " + str(high) + " " + str(low) + " " + str(close) + "$"
+            #     print(" Open: " + str(open_) + " High: " + str(high) + " Low: " + str(low) + " Close: " + str(close))
+            #     FOREX.insert(reqId, arrived)
+            #     # if len(FOREX) == 0:
+            #     #     FOREX.insert(reqId, arrived)
+            #     # else:
+            #     #     try:
+            #     #         #FOREX.insert(reqId, " ")
+            #     #         FOREX.insert(reqId, arrived)
+            #     #         #print("FOREX: ", FOREX[reqId], '\n')
+            #     #     except:
+            #     #         print("Attempted to access Forex[", reqId, "] but it does not exist. It's current lenght is ",
+            #     #               len(FOREX))
+            #     #data_lock.release()
+            #
+            #     #print("FOREX: ", FOREX[reqId] )
+            #     print("Notifying  ", reqId  )
+            #     lock.notifyAll()
 
     def historicalData(self, reqId: int, bar: BarData):
        # print("HistoricalData. ReqId:", reqId, "BarData.", bar)
         global FOREX
         global order_ID
         global locks
-        if reqId == 1:
-            print("other served" , '\n')
+        global flags
 
-        lock = locks[reqId]
-        print("IB Locking ", reqId, "\n")
-        with lock:
-            arrived = str(bar) + " "
-            if len(FOREX) <= reqId:
-                FOREX.append(arrived)
-            else:
-        #        print("Querying ", reqId, " in FOREX")
-                FOREX[reqId] += arrived
-            try:
-                print("FOREX: ", FOREX[reqId] , '\n')
-            except:
-                print("Attempted to access Forex[", reqId,"] but it does not exist. It's current lenght is " , len(FOREX)  )
-          #  print("unlocking ", reqId)
-            print("IB Unlocking ", reqId, "\n")
-            lock.notify()
+        # FOREX.insert(reqId, str(bar) + "$")
+        # flags.insert(reqId, True)
+
+
+        FOREX[reqId] = str(bar) + "$"
+        flags[reqId] = True
+        while(flags[reqId]):
+            pass
+
+        # print("Data Arrived")
+        # print("locking ", reqId)
+        # print(bar)
+        # print("Data Recieved from " , reqId, " is", )
+        # print("Data Recieved from ", reqId)
+        # print("IB locking " , reqId)
+        # lock = locks[reqId]
+        # with lock:
+        #     print("Data being inserted in " , reqId)
+        #     FOREX[reqId] = str(bar) + "$"
+        #     flags.insert(reqId, True)
+        #     lock.notifyAll()
+
+
+
+
+
+        # if reqId == 1:
+        #     print("other served" , '\n')
+
+        # lock = locks[reqId]
+        # print("IB Locking ", reqId, "\n")
+        # with lock:
+        #     arrived = str(bar) + " "
+        #     if len(FOREX) <= reqId:
+        #         FOREX.append(arrived)
+        #     else:
+        # #        print("Querying ", reqId, " in FOREX")
+        #         FOREX[reqId] += arrived
+        #     try:
+        #         print("FOREX: ", FOREX[reqId] , '\n')
+        #     except:
+        #         print("Attempted to access Forex[", reqId,"] but it does not exist. It's current lenght is " , len(FOREX)  )
+        #   #  print("unlocking ", reqId)
+        #     print("IB Unlocking ", reqId, "\n")
+        #     lock.notify()
 
 
 
@@ -128,6 +184,9 @@ class TestApp(EWrapper, EClient):
                     whyHeld:str, mktCapPrice: float):
         print(status)
 
+    def openOrder(self, orderId:OrderId, contract:Contract, order:Order,
+                  orderState:OrderState):
+        print(orderState)
 
     def pnl(self, reqId: int, dailyPnL: float, unrealizedPnL: float, realizedPnL: float):
         global Daily_PnL_Time
@@ -136,7 +195,6 @@ class TestApp(EWrapper, EClient):
         super().pnl(reqId, dailyPnL, unrealizedPnL, realizedPnL)
         Daily_PnL_Vals.append(dailyPnL)
         Daily_PnL_Time.append(datetime.datetime.now())
-
         line1 = self.graphIt()
         print("Daily PnL. ReqId:", reqId, "DailyPnL:", dailyPnL,
               "UnrealizedPnL:", unrealizedPnL, "RealizedPnL:", realizedPnL)
@@ -167,10 +225,12 @@ class TestApp(EWrapper, EClient):
             plt.pause(.01)
         return line1
 
+
 def interactiveBrokers(symbol:str, secType:str, currency:str, exchange:str, orderID:str):
-    #global line1
-    #global LineLock
-    #LineLock.append(True)
+    global line1
+    global LineLock
+    global demoAccountID
+    LineLock.append(True)
     app = TestApp()
     app.connect("127.0.0.1", 7497, orderID)
     time.sleep(.0000000000001)  # TODO: report bug to IB repo. or daemon?
@@ -182,19 +242,21 @@ def interactiveBrokers(symbol:str, secType:str, currency:str, exchange:str, orde
     contract.exchange = exchange
     #app.reqMarketDataType(4)
     print("Requesting IB contract by id" , orderID )
-    queryTime = (datetime.datetime.today() - datetime.timedelta(days=179)).strftime("%Y%m%d %H:%M:%S")
+
+    queryTime = (datetime.datetime.today() - datetime.timedelta(days=100)).strftime("%Y%m%d %H:%M:%S")
     app.reqHistoricalData(int(orderID), contract, queryTime,"1 M", "1 day", "MIDPOINT", 1, 1, False, [] )
-    #app.reqRealTimeBars(int(orderID), contract, 5, "MIDPOINT", False, [])
-    #TODO Make sure to change acctcode from being hardcoded
-    app.reqAccountUpdates(subscribe=True, acctCode="DU230015")
-    #app.reqPnL(17001, "DU230015", "")
-    #app.pnl(pnlVars[0], pnlVars[1], pnlVars[2], pnlVars[3])
+    # app.reqRealTimeBars(int(orderID), contract, 5, "MIDPOINT", False, [])
+
+    # TODO Make sure to change acctcode from being hardcoded
+    # app.reqAccountUpdates(subscribe=True, acctCode=demoAccountID)
+    # app.reqPnL(17001, demoAccountID, "")
+    # app.pnl(pnlVars[0], pnlVars[1], pnlVars[2], pnlVars[3])
     # order = Order()
     # order.action = "BUY"
-    # order.orderType = "MKT"
+    # order.orderType = "LMT"
     # order.totalQuantity = 20
-    # #order.lmtPrice = 0.68095
-    # app.placeOrder(69, contract, order)
+    # order.lmtPrice = 108.525
+    # app.placeOrder(1, contract, order)
     app.run()
 
 
@@ -207,16 +269,11 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
         global order_ID
         global locks
         global id_lock
-
+        global flags
 
         id_lock.acquire()
         local_id = order_ID
         print("NEW CLIENT: ", order_ID , '\n')
-
-
-
-
-
         # recieved = self.request[0].strip()
         # request = str.split(recieved.decode("utf-8"))
         # socket = self.request[1]
@@ -233,36 +290,36 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
         lock = threading.Condition()
         locks.insert(local_id, lock)
         order_ID += 1
+        flags.insert(local_id, False)
+        FOREX.insert(local_id, "")
         IB_thread.start()
         id_lock.release()
 
-        while(True):
-            with lock:
-                lock.wait()
-                print( local_id, " is sending ", FOREX[local_id] )
+        while (True):
+            if (flags[local_id] is True):
+                print(local_id, " is sending ", FOREX[local_id])
                 self.request.sendall(bytes(FOREX[local_id].encode("utf-8")))
                 FOREX[local_id] = ""
+                flags[local_id] = False
+
+        # while(True):
+        #     with lock:
+        #         print( local_id, " is going to wait for IB.")
+        #         lock.wait()
+        #        # print(local_id, " is sending ", FOREX[local_id])
+        #         self.request.sendall(bytes(FOREX[local_id].encode("utf-8")))
+        #         FOREX[local_id] = ""
+        #         flags[local_id] = False
 
 
+        # while(True):
+        #     with lock:
+        #         lock.wait()
+        #         print( local_id, " is sending ", FOREX[local_id] )
+        #         self.request.sendall(bytes(FOREX[local_id].encode("utf-8"))):
+        #         FOREX[local_id] = ""
 
-def client_sink(id:int, socket, client_address ):
-    global locks
-    global FOREX
-    global data_lock
-    lock = locks[id]
 
-    while(True):
-        with lock:
-            #print("Sender Locking ", id, " at time: " , datetime.datetime.today(),'\n',)
-            lock.wait()
-            data_lock.acquire()
-            #print("Sender UNLOCKING ", id,  " at time: " , datetime.datetime.today(), '\n',)
-            try:
-                print(id, " is SENDING ", FOREX[id], '\n')
-                socket.sendto(bytes(FOREX[id].encode("utf-8")), client_address)
-            except:
-                print(" FOREX index incorrect attempted on index: ", id, " and FOREX has, " , FOREX )
-            data_lock.release()
 
 
 class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):   # is declaration necessary?
@@ -291,11 +348,11 @@ if __name__ == "__main__":
 
 
 
-# TODO: UDPServer to TCPServer
-# TODO: Broker function called by TCP handler
-# TODO: Golang request parser
+# TODO: UDPServer to TCPServer  -- DONE.
+# TODO: Broker function called by TCP handler  -- half/Done
+# TODO: Golang request parser   -- DONE
 # TODO: P&L plotting function.  https://matplotlib.org/gallery/style_sheets/dark_background.html#sphx-glr-gallery-style-sheets-dark-background-py
-# TODO: FOREX data time synchronization?
+# TODO: FOREX data time synchronization?   -- QUESTION
 #TODO: add Same Source checkers in prim_eval funcs in golang
 
 

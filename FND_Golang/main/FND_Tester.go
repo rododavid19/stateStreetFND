@@ -31,11 +31,15 @@ func main(){
 	//GTE(SMA(seriesSource("EUR CASH USD IDEALPRO", "close"), 2, "short"),
 	//	SMA(seriesSource("EUR CASH USD IDEALPRO", "close"), 8, "long"), "2-SMA-STRATEGY")
 
-	short := SMA(seriesSource("EUR CASH USD IDEALPRO", "close"), 2, "short")
-	long := SMA(seriesSource("EUR CASH USD IDEALPRO", "close"), 8, "long")
-	sellOrder := GTE(short, long, "sellOrder")
-	buyOrder := GTE(long, short, "buyOrder")
-	SUBTRACT(sellOrder, buyOrder, "buy or sell?")
+	//short := SMA(seriesSource("EUR CASH USD IDEALPRO", "close"), 2, "short")
+	//long := SMA(seriesSource("EUR CASH USD IDEALPRO", "close"), 8, "long")
+	//sellOrder := GTE(short, long, "sellOrder")
+	//buyOrder := GTE(long, short, "buyOrder")
+	buyOrder := GTE(SMA(seriesSource("EUR CASH USD IDEALPRO", "close"), 3, "long"),
+		SMA(seriesSource("EUR CASH USD IDEALPRO", "close"), 2, "short"), "buyOrder")
+	sellOrder := GTE(SMA(seriesSource("EUR CASH USD IDEALPRO", "close"), 2, "short"),
+		SMA(seriesSource("EUR CASH USD IDEALPRO", "close"), 3, "long"), "sellOrder")
+	SUBTRACT(sellOrder, buyOrder, "Subtract")
 	time.Sleep(1)
 	barrier.Wait()
 }
