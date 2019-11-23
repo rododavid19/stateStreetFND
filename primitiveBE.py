@@ -28,6 +28,7 @@ def SUBTRACT(p):
         for col in a.columns:
             if a[col].dtype != bool or b[col].dtype != bool:
                 bool_lock = False
+                break
             else:
                 bool_lock = True
         if bool_lock:
