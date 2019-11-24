@@ -24,7 +24,21 @@ def ADD(p):
 def SUBTRACT(p):
         a = p.arguments["a"].parent.arguments.data
         b = p.arguments["b"].parent.arguments.data
-
+        bool_lock = False
+        for col in a.columns:
+            if a[col].dtype != bool or b[col].dtype != bool:
+                bool_lock = False
+                break
+            else:
+                bool_lock = True
+        if bool_lock:
+            a2 = a.astype(int)
+            b2 = b.astype(int)
+            if type(a) and type(b) is pd.DataFrame:
+                p.arguments.data = pd.DataFrame(a2 - b2)
+            if type(a) and type(b) is pd.Series:
+                p.arguments.data = pd.Series(a2 - b2)
+            return
         if type(a) and type(b) is pd.DataFrame:
             p.arguments.data = pd.DataFrame(a - b)
         if type(a) and type(b) is pd.Series:

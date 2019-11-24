@@ -575,16 +575,18 @@ def simple_2SMA_Strategy(series: Series, shortWindow: int=None, longWindow: int=
     sma_short = sma(series, shortWindow, name='short')
     sma_long = sma(series, longWindow, name='long')
     sellOrder = greaterOrEqual(sma_short, sma_long, name='sellOrder')
-    buyOrder = lessOrEqual(sma_short, sma_long, name='buyOrder')
-    sellOrderInt = dfBoolToInt(sellOrder, name='sellOrderInt')
-    buyOrderInt = dfBoolToInt(buyOrder, name='buyOrderInt')
-    buy_sellOrder = subtract(sellOrderInt, buyOrderInt, name='buy_sellOrder')
-    quant = quantityToDf(series, quantity, name="quant")
-    PandLTemp = multiply(buy_sellOrder, series, name="PandLTemp")
-    profit_and_loss = multiply(PandLTemp, quant, name='profit_and_loss')
-    profit_and_loss2 = replaceTimeColumnDf(profit_and_loss, series, name='profit_and_loss2')
-    sum_Profit_Loss = columnSumDf(profit_and_loss2, name='sum_Profit_Loss')
-    return dataFrame({'buy_sellOrder': buy_sellOrder, 'profit_and_loss': profit_and_loss2, 'sum_Profit_Loss': sum_Profit_Loss}, name='df')
+    buyOrder = greaterOrEqual(sma_long, sma_short, name='buyOrder')
+    buy_sellOrder = subtract(sellOrder, buyOrder, name='buy_sellOrder')
+    #sellOrderInt = dfBoolToInt(sellOrder, name='sellOrderInt')
+    #buyOrderInt = dfBoolToInt(buyOrder, name='buyOrderInt')
+    #quant = quantityToDf(series, quantity, name="quant")
+    #PandLTemp = multiply(buy_sellOrder, series, name="PandLTemp")
+    #profit_and_loss = multiply(PandLTemp, quant, name='profit_and_loss')
+    #profit_and_loss2 = replaceTimeColumnDf(profit_and_loss, series, name='profit_and_loss2')
+    #sum_Profit_Loss = columnSumDf(profit_and_loss2, name='sum_Profit_Loss')
+    #return dataFrame({'buy_sellOrder': buy_sellOrder, 'profit_and_loss': profit_and_loss2, 'sum_Profit_Loss': sum_Profit_Loss}, name='df')
+    return dataFrame({'buy_sellOrder': buy_sellOrder})
+
 
 @module
 def simple_3SMA_Strategy(series: Series, shortestWindow: int=None, shortWindow: int=None, longWindow: int=None, name: str=None) -> DataFrame:
@@ -602,6 +604,30 @@ def simple_3SMA_Strategy(series: Series, shortestWindow: int=None, shortWindow: 
     #elseif sma_shortest > sma_long && sma_short > sma_long -> Sell
     #else (sma_shortest == sma_long OR sma_short == sma_long) -> Do Nothing
     return dataFrame({'sellOrder': sellOrder, 'buyOrder': buyOrder, 'noOrder': noOrder}, name='df')
+
+def profitCalc(Orders, series: Series, quantity) -> DataFrame:
+    quant = series.copy()
+    colNames = series.columns
+    for col in colNames:
+        if col == colNames[0]:
+            continue
+        quant[col].values[:] = quantity
+    PandLTemp = pd.DataFrame(Orders * series)
+    profit_and_loss = pd.DataFrame(PandLTemp * quant)
+    profit_and_loss[colNames[0]] = series[colNames[0]]
+    profit_and_loss = profit_and_loss[colNames]
+    toRet = pd.DataFrame(columns=profit_and_loss.columns)
+    toRetDict = []
+    for col in colNames:
+        if col == colNames[0]:
+            continue
+        sum = profit_and_loss[col].values.sum()
+        toRetDict.append(sum)
+    for i in range(len(toRet.columns)):
+        if i == 0:
+            continue
+        toRet.loc[0, toRet.columns[i]] = toRetDict[i - 1]
+    return toRet
 
 SOURCE_TYPES = ['seriesSource', 'dataFrame']
 SINK_TYPES = [seriesSink, DataFrame]

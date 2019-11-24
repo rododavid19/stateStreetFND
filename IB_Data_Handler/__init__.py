@@ -49,6 +49,7 @@ changeCount = 0
 loop_flag = False
 dataArrived = False
 order_ID = 0
+demoAccountID = ""
 
 locks = [""]
 FOREX = [""]
@@ -227,6 +228,7 @@ class TestApp(EWrapper, EClient):
 def interactiveBrokers(symbol:str, secType:str, currency:str, exchange:str, orderID:str):
     global line1
     global LineLock
+    global demoAccountID
     LineLock.append(True)
     app = TestApp()
     app.connect("127.0.0.1", 7497, orderID)
@@ -245,8 +247,8 @@ def interactiveBrokers(symbol:str, secType:str, currency:str, exchange:str, orde
     # app.reqRealTimeBars(int(orderID), contract, 5, "MIDPOINT", False, [])
 
     # TODO Make sure to change acctcode from being hardcoded
-    # app.reqAccountUpdates(subscribe=True, acctCode="DU230026")
-    # app.reqPnL(17001, "DU230004", "")
+    # app.reqAccountUpdates(subscribe=True, acctCode=demoAccountID)
+    # app.reqPnL(17001, demoAccountID, "")
     # app.pnl(pnlVars[0], pnlVars[1], pnlVars[2], pnlVars[3])
     # order = Order()
     # order.action = "BUY"
