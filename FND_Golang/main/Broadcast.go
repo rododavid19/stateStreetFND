@@ -1,67 +1,69 @@
 package main
 
 type broadcast struct {
-	c	chan broadcast;
-	v	interface{};
+	c chan broadcast
+	v interface{}
 }
 
+// Broadcaster allows
 type Broadcaster struct {
-	// private fields:
-	Listenc	chan chan (chan broadcast);
-	Sendc	chan<- interface{};
-	name string;
+	cc    chan broadcast
+	sendc chan<- interface{}
+	name string
 }
 
+// Receiver can be used to wait for a broadcast value.
 type Receiver struct {
-	// private fields:
-	C chan broadcast;
-	name string;
+	c chan broadcast
+	name string
+	master_id string
 }
 
-// create a new broadcaster object.
+// NewBroadcaster returns a new broadcaster object.
 func NewBroadcaster() Broadcaster {
-	listenc := make(chan (chan (chan broadcast)));
-	sendc := make(chan interface{});
+	cc := make(chan broadcast, 1)
+	sendc := make(chan interface{})
+	b := Broadcaster{
+		sendc: sendc,
+		cc:    cc,
+	}
+
 	go func() {
-		currc := make(chan broadcast, 1);
 		for {
 			select {
 			case v := <-sendc:
 				if v == nil {
-					currc <- broadcast{};
-					return;
+					b.cc <- broadcast{}
+					return
 				}
-				c := make(chan broadcast, 1);
-				b := broadcast{c: c, v: v};
-				currc <- b;
-				currc = c;
-			case r := <-listenc:
-				r <- currc
+				c := make(chan broadcast, 1)
+				newb := broadcast{c: c, v: v}
+				b.cc <- newb
+				b.cc = c
 			}
 		}
-	}();
-	return Broadcaster{
-		Listenc: listenc,
-		Sendc: sendc,
-	};
+	}()
+
+	return b
 }
 
-// start listening to the broadcasts.
+// Listen starts returns a Receiver that
+// listens to all broadcast values.
 func (b Broadcaster) Listen() Receiver {
-	c := make(chan chan broadcast, 0);
-	b.Listenc <- c;
-	return Receiver{<-c, "" };
+	return Receiver{b.cc, "", b.name}
 }
 
-// broadcast a value to all listeners.
-func (b Broadcaster) Write(v interface{})	{ b.Sendc <- v }
+// Write broadcasts a a value to all listeners.
+func (b Broadcaster) Write(v interface{}) {
+	b.sendc <- v
+}
 
-// read a value that has been broadcast,
+// Read reads a value that has been broadcast,
 // waiting until one is available if necessary.
 func (r *Receiver) Read() interface{} {
-	b := <-r.C;
-	v := b.v;
-	r.C <- b;
-	r.C = b.c;
-	return v;
+	b := <-r.c
+	v := b.v
+	r.c <- b
+	r.c = b.c
+	return v
 }
