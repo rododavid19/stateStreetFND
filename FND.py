@@ -636,7 +636,7 @@ def graphit(PnL):
     for col in colNames:
         if col == colNames[0]:
             continue
-        CumSum.plot.line(y=col, ax=ax)
+        CumSum.plot.line(y=col, ax=ax, figsize=(13, 6), title="Historical Profit and Loss", )
     plt.show()
     hello = "mello"
 
