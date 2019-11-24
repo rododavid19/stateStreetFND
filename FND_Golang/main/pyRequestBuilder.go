@@ -7,11 +7,15 @@ import (
 
 var arithmetic_Operators = map[string]func(seriesSource *Receiver, window int, priceType string ,optionalName string) *Receiver{
 	"sma": SMA,
+	"max": MAX,
+	"min": MIN,
+	"ema": EMA,
 }
 
 var reciever_operator = map[string]func(a *Receiver, b *Receiver, optionalName string) *Receiver{
 	"add": ADD,
 	"subtract": SUBTRACT,
+	"gte": GTE,
 }
 
 // TODO: Fix priceType below
@@ -32,13 +36,10 @@ func Find(slice []string, val string)  bool {
 
 //export py
 func py(request string ) {
-
 	request_array := strings.Split(request, " , ")
 	recievers := map[string]*Receiver{}
-
 	for _, curr := range request_array{
 		parser := strings.Split( curr, " " )
-
 		curr_primitive := parser[0]
 
 

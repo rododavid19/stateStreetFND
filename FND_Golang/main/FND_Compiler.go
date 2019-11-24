@@ -37,16 +37,16 @@ func SUBTRACT(a *Receiver, b *Receiver, optionalName string ) *Receiver {
 }
 
 func subtract_eval(source_a *Receiver, source_b *Receiver, output *Broadcaster, id string){
-	if( source_a == source_b){
+	if(source_a == source_b){
 		for b := source_b.Read(); b != nil; b = source_b.Read() {
 			data_b := fmt.Sprintf("%v", b)
 			println("SAME SOURCE SUBTRACT prim is subtracting: " + data_b + " - " + data_b )
 			output.Write(0)
 		}
+		return
 	}
 	for a := source_a.Read(); a != nil; a = source_a.Read() {
 		for b := source_b.Read(); b != nil; {
-
 			data_a := fmt.Sprintf("%v", a)
 			data_b := fmt.Sprintf("%v", b)
 			fmt.Println(id, " RECEIVED a:", data_a," & b:", data_b, "at time ", time.Now()   , " from receiver ", source_a.name, "& from receiver ", source_b.name ); //v);
@@ -85,11 +85,11 @@ func subtract_eval(source_a *Receiver, source_b *Receiver, output *Broadcaster, 
 	}
 }
 
-func ADD(a *Receiver, b *Receiver) Receiver{
+func ADD(a *Receiver, b *Receiver, optionalName string) *Receiver{
 	add_toSring := a.name + " + " + b.name
 	if _, ok := compiler_handlers[add_toSring]; ok {
 		listener := compiler_handlers[add_toSring].Listen()
-		return listener
+		return &listener
 	}
 	if _, ok := registered_recievers[a.name]; ok {
 		list := compiler_handlers[a.name].Listen()
@@ -112,7 +112,7 @@ func ADD(a *Receiver, b *Receiver) Receiver{
 	fmt.Println( "ADD" + add_toSring + " created at ", time.Now()  );
 	go add_eval( a, b, &composer, add_toSring)
 	listener := composer.Listen()
-	return listener
+	return &listener
 }
 
 func add_eval(source_a *Receiver, source_b *Receiver, output *Broadcaster, id string){
@@ -121,6 +121,7 @@ func add_eval(source_a *Receiver, source_b *Receiver, output *Broadcaster, id st
 			data_b := fmt.Sprintf("%v", b)
 			println("SAME SOURCE ADD prim is adding: " + data_b + " + " + data_b )
 		}
+		return
 	}
 	for a := source_a.Read(); a != nil; a = source_a.Read() {
 		for b := source_b.Read(); b != nil; {
@@ -138,7 +139,7 @@ func add_eval(source_a *Receiver, source_b *Receiver, output *Broadcaster, id st
 
 
 
-func SMA( seriesSource *Receiver, window int, optionalName string ) *Receiver {
+func SMA( seriesSource *Receiver, window int, priceType string, optionalName string ) *Receiver {
 
 	if _, ok := compiler_handlers[optionalName]; ok {
 
@@ -150,7 +151,7 @@ func SMA( seriesSource *Receiver, window int, optionalName string ) *Receiver {
 	compiler_handlers[optionalName] = composer
 
 	fmt.Println( optionalName + " created at ", time.Now()  );
-	go sma_eval( seriesSource,&composer, optionalName, window)
+	go sma_eval( seriesSource,&composer, optionalName, window, priceType)
 
 	listener := composer.Listen()
 	listener.name = optionalName
@@ -162,7 +163,7 @@ func SMA( seriesSource *Receiver, window int, optionalName string ) *Receiver {
 
 
 
-func sma_eval( source *Receiver, output *Broadcaster, id string, window int) {
+func sma_eval( source *Receiver, output *Broadcaster, id string, window int, priceType string) {
 
 	barrier.Add(1)
 
@@ -242,6 +243,14 @@ func GTE(a *Receiver, b *Receiver, optionalName string ) *Receiver {
 /* greater than only checks to see if the first source is greater than or equal the second*/
 func gte_eval(a *Receiver, b *Receiver, output *Broadcaster, id string) {
 	barrier.Add(1)
+	if(a == b){
+		for b2 := b.Read(); b2 != nil; b2 = b.Read() {
+			data_b := fmt.Sprintf("%v", b2)
+			println("SAME SOURCE GTE prim is evaluating: " + data_b + " >= " + data_b )
+			output.Write("TRUE")
+		}
+		return
+	}
 	for b_read := b.Read(); b_read != nil; b_read = b.Read() {
 		a_read := a.Read()
 		fmt.Println(id, " RECEIVED at time ", time.Now()   , " from A receiver ", a.name  ); //v);
@@ -276,7 +285,7 @@ func gte_eval(a *Receiver, b *Receiver, output *Broadcaster, id string) {
 }
 
 /* exponential moving average is like simple moving average but takes the age of each data point into account*/
-func EMA( seriesSource *Receiver, window int, optionalName string ) *Receiver {
+func EMA( seriesSource *Receiver, window int, priceType string ,optionalName string) *Receiver {
 
 	if _, ok := compiler_handlers[optionalName]; ok {
 
@@ -288,7 +297,7 @@ func EMA( seriesSource *Receiver, window int, optionalName string ) *Receiver {
 	compiler_handlers[optionalName] = composer
 
 	fmt.Println( optionalName + " created at ", time.Now()  )
-	go ema_eval( seriesSource,&composer, optionalName, window)
+	go ema_eval( seriesSource,&composer, optionalName, window, priceType)
 
 	listener := composer.Listen()
 	listener.name = optionalName
@@ -298,7 +307,7 @@ func EMA( seriesSource *Receiver, window int, optionalName string ) *Receiver {
 }
 
 
-func ema_eval( source *Receiver, output *Broadcaster, id string, window int) {
+func ema_eval( source *Receiver, output *Broadcaster, id string, window int, priceType string) {
 
 	barrier.Add(1)
 	ema_prev := -10.0
@@ -337,7 +346,7 @@ func ema_eval( source *Receiver, output *Broadcaster, id string, window int) {
 	}
 }
 
-func MIN( seriesSource *Receiver, window int, optionalName string ) *Receiver {
+func MIN( seriesSource *Receiver, window int, priceType string ,optionalName string) *Receiver {
 
 	if _, ok := compiler_handlers[optionalName]; ok {
 
@@ -349,7 +358,7 @@ func MIN( seriesSource *Receiver, window int, optionalName string ) *Receiver {
 	compiler_handlers[optionalName] = composer
 
 	fmt.Println( optionalName + " created at ", time.Now()  )
-	go min_eval( seriesSource,&composer, optionalName, window)
+	go min_eval( seriesSource,&composer, optionalName, window, priceType)
 
 	listener := composer.Listen()
 	listener.name = optionalName
@@ -359,7 +368,7 @@ func MIN( seriesSource *Receiver, window int, optionalName string ) *Receiver {
 }
 
 
-func min_eval( source *Receiver, output *Broadcaster, id string, window int) {
+func min_eval( source *Receiver, output *Broadcaster, id string, window int, priceType string) {
 	barrier.Add(1)
 	closePrices := []float64{}
 
@@ -386,7 +395,7 @@ func min_eval( source *Receiver, output *Broadcaster, id string, window int) {
 	}
 }
 
-func MAX( seriesSource *Receiver, window int, optionalName string ) *Receiver {
+func MAX( seriesSource *Receiver, window int, priceType string ,optionalName string) *Receiver {
 
 	if _, ok := compiler_handlers[optionalName]; ok {
 
@@ -398,7 +407,7 @@ func MAX( seriesSource *Receiver, window int, optionalName string ) *Receiver {
 	compiler_handlers[optionalName] = composer
 
 	fmt.Println( optionalName + " created at ", time.Now()  )
-	go max_eval( seriesSource,&composer, optionalName, window)
+	go max_eval( seriesSource,&composer, optionalName, window, priceType)
 
 	listener := composer.Listen()
 	listener.name = optionalName
@@ -408,7 +417,7 @@ func MAX( seriesSource *Receiver, window int, optionalName string ) *Receiver {
 }
 
 
-func max_eval( source *Receiver, output *Broadcaster, id string, window int) {
+func max_eval( source *Receiver, output *Broadcaster, id string, window int, priceType string) {
 	barrier.Add(1)
 	closePrices := []float64{}
 

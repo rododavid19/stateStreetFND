@@ -49,7 +49,7 @@ changeCount = 0
 loop_flag = False
 dataArrived = False
 order_ID = 0
-demoAccountID = ""
+demoAccountID = "230011"
 
 locks = [""]
 FOREX = [""]

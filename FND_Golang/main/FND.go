@@ -185,7 +185,7 @@ func (n *Network) pushModule( module *Node, primitives *[]Node ){
 var handlers = map[string]Broadcaster{}
 
 
-func seriesSource(source string, priceType string ) *Receiver {
+func seriesSource(source string) *Receiver {
 	// addNode, this will be shared by everyone
 	//defer barrier.Done()
 
@@ -205,7 +205,7 @@ func seriesSource(source string, priceType string ) *Receiver {
 	go sinkSource(&composer, source)  // TODO: not attaching priceType yet.
 
 	listener := composer.Listen()
-	listener.name = source +  " " + priceType
+	listener.name = source
 
 
 	return &listener

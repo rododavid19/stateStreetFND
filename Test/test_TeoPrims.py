@@ -177,38 +177,41 @@ class testNetwork_ColumnMethods(unittest.TestCase):
 class testNetwork_SIMPLESMASTRATEGYTESTS(unittest.TestCase):
     def test_SIMPLE2SMA_NOV2019TICK(self):
         with Network() as n:
-            forex = pd.read_csv("DAT_ASCII_EURUSD_T_201910.csv")
+            filename = "DAT_ASCII_EURUSD_T_201910.csv"
+            forex = pd.read_csv(filename)
             sourceDict = {'forex': forex}
             df = seriesSource('forex')
             simple_2SMA_Strategy(df, shortWindow=50, longWindow=200, quantity=20, name='2SMA')
             sinkDict = piEval(n, sourceDict)
             Orders = sinkDict.get('2SMA/buy_sellOrder')
             Profit_And_Loss = profitCalc(Orders, forex, quantity=20)
-            graphit(Profit_And_Loss)
+            graphit(Profit_And_Loss, filename)
             n.report()
 
     def test_SIMPLE2SMA_SEP2007TICK(self):
         with Network() as n:
-            forex = pd.read_csv("DAT_ASCII_EURUSD_T_200709.csv")
+            filename="DAT_ASCII_EURUSD_T_200709.csv"
+            forex=pd.read.csv(filename)
             sourceDict = {'forex': forex}
             df = seriesSource('forex')
             simple_2SMA_Strategy(df, shortWindow=50, longWindow=200, quantity=20, name='2SMA')
             sinkDict = piEval(n, sourceDict)
             Orders = sinkDict.get('2SMA/buy_sellOrder')
             Profit_And_Loss = profitCalc(Orders, forex, quantity=20)
-            graphit(Profit_And_Loss)
+            graphit(Profit_And_Loss,filename)
             n.report()
 
     def test_SIMPLE2SMA_OCT2013TICK(self):
         with Network() as n:
-            forex = pd.read_csv("DAT_ASCII_EURUSD_T_201310.csv")
+            filename="DAT_ASCII_EURUSD_T_201310.csv"
+            forex = pd.read_csv(filename)
             sourceDict = {'forex': forex}
             df = seriesSource('forex')
             simple_2SMA_Strategy(df, shortWindow=50, longWindow=200, quantity=20, name='2SMA')
             sinkDict = piEval(n, sourceDict)
             Orders = sinkDict.get('2SMA/buy_sellOrder')
             Profit_And_Loss = profitCalc(Orders, forex, quantity=20)
-            graphit(Profit_And_Loss)
+            graphit(Profit_And_Loss,filename)
             n.report()
 
     def test_SIMPLE2SMA_TINY_EZ(self):

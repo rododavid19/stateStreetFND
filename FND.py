@@ -426,7 +426,7 @@ def addTicks(series: Series, ticks, name: str=None) -> Series:
 ## Operations on Fixed-Size Rolling Windows ##
 
 @primitive
-def sma(series: Series, window: int, name: str=None) -> Series:
+def sma(series: Series, window: int, name: str=None, priceType: str=None) -> Series:
     if(window > 0):
         return Series(name, series)
     else:
@@ -440,7 +440,7 @@ def stdev(series: Series, window: int=None, name: str=None) -> Series:
         raise Exception("window size must be greater than zero")
 
 @primitive
-def min(series: Series, window: int=None, name: str=None) -> Series:
+def min(series: Series, window: int=None, name: str=None, priceType: str=None) -> Series:
     if(window > 0):
         return Series(name, series)
     else:
@@ -448,7 +448,7 @@ def min(series: Series, window: int=None, name: str=None) -> Series:
 
 
 @primitive
-def max(series: Series, window: int=None, name: str=None) -> Series:
+def max(series: Series, window: int=None, name: str=None, priceType: str=None) -> Series:
     if(window > 0):
         return Series(name, series)
     else:
@@ -468,7 +468,7 @@ def delay(series: Series, samples: int, name: str=None) -> Series:
 
 ## Exponentially-Weighted Operations ##
 @primitive
-def ema(series: Series, span: int, name: str=None) -> Series:
+def ema(series: Series, span: int, name: str=None, priceType: str=None) -> Series:
     return Series(name, series)
 
 
@@ -629,16 +629,18 @@ def profitCalc(Orders, series: Series, quantity) -> DataFrame:
         toRet.loc[0, toRet.columns[i]] = toRetDict[i - 1]
     return profit_and_loss
 
-def graphit(PnL):
+def graphit(PnL, Filename):
+    YearMonth = Filename[19:23] + "/" + Filename[23:25]  # Only works for the historical data files from histdata.org
     ax=plt.gca()
-    colNames=PnL.columns
+    colNames=list(PnL)
     CumSum = PnL.expanding(1).sum()
+    if (CumSum[colNames[-1]] == 0).all():
+        colNames.remove(colNames[-1])
     for col in colNames:
         if col == colNames[0]:
             continue
-        CumSum.plot.line(y=col, ax=ax, figsize=(13, 6), title="Historical Profit and Loss", )
+        CumSum.plot.line(y=col, ax=ax, figsize=(13, 6), title="Historical Profit and Loss(USD): " +YearMonth)
     plt.show()
-    hello = "mello"
 
 
 SOURCE_TYPES = ['seriesSource', 'dataFrame']
