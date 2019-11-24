@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"math"
+	"net"
 	"strconv"
 	"strings"
 	"sync"
@@ -152,15 +154,14 @@ func SMA( seriesSource *Receiver, window int, priceType string, optionalName str
 	listener.name = optionalName
 	return &listener
 }
-//defer barrier.Done()
 func sma_eval( source *Receiver, output *Broadcaster, id string, window int, priceType string) {
-
 
 	index := price_map[priceType]
 	barrier.Add(1)
 	closePrices := []float64{}
 	r := source
 	for v := r.Read(); v != nil; v = r.Read() {
+		fmt.Println(id + " recieved " + v.(string) )
 		close_price := strings.TrimSuffix(strings.Split(v.(string), " ")[index], "$") //TODO used to be 5
 		close_price = strings.TrimSuffix(close_price, ",")
 		close_float, _ := strconv.ParseFloat(close_price, 64)
@@ -177,7 +178,6 @@ func sma_eval( source *Receiver, output *Broadcaster, id string, window int, pri
 			ret_value = sum/float64(len(closePrices))
 		}
 		output.Write(ret_value)
-		fmt.Println(id, " RECEIVED at time ", time.Now()   , " from receiver ", source.name  ); //v);
 	}
 
 }
@@ -204,40 +204,31 @@ func GTE(a *Receiver, b *Receiver, optionalName string ) *Receiver {
 	return &listener
 
 }
-func gte_eval(source_a *Receiver, source_b *Receiver, output *Broadcaster, id string) {
-
-
-	if( source_a.master_id == source_b.master_id){
-		for b := source_b.Read(); b != nil; b = source_b.Read() {
+func gte_eval(a *Receiver, b *Receiver, output *Broadcaster, id string) {
+	if( a.master_id == b.master_id){
+		for b2 := b.Read(); b2 != nil; b2 = b.Read() {
 			print("GTE SAME")
-			output.Write(1)
+			output.Write(true)
 		}
-
 	}
-
-
 	barrier.Add(1)
-
-	for long_read := source_b.Read(); long_read != nil; long_read = source_b.Read() {
-		short_read := source_a.Read()
-		fmt.Println(id, " RECEIVED at time ", time.Now()   , " from receiver ", source_a.name  ); //v);
-		fmt.Println(id, " RECEIVED at time ", time.Now()   , " from receiver ", source_b.name  ); //v);
-		data_long := fmt.Sprintf("%v", long_read)
-		if data_long == "NaN"{
+	for b_read := b.Read(); b_read != nil; b_read = b.Read() {
+		a_read := a.Read()
+		fmt.Println(id, " RECEIVED at time ", time.Now()   , " from A receiver ", a.name  ); //v);
+		fmt.Println(id, " RECEIVED at time ", time.Now()   , " from B receiver ", b.name  ); //v);
+		a_string := fmt.Sprintf("%v", a_read)
+		b_string := fmt.Sprintf("%v", b_read)
+		if a_string == "NaN" || b_string == "NaN"{
 			continue
 		}
-		short_float, _ := strconv.ParseFloat(fmt.Sprintf("%v", short_read), 64)
-		long_float, _ := strconv.ParseFloat(data_long, 64)
-
-		if short_float > long_float{
-			output.Write(1)
-			fmt.Println("short: ",short_float, "long: ", long_float, "action: BUY")
-		} else if short_float < long_float{
-			output.Write(-1)
-			fmt.Println("short: ",short_float, "long: ", long_float, "action: SELL")
+		a_float, _ := strconv.ParseFloat(a_string, 64)
+		b_float, _ := strconv.ParseFloat(b_string, 64)
+		if a_float < b_float{
+			fmt.Println(id ," Calculated @ time, ",time.Now(), "variables: ", a_float, " < ", b_float, "results in: ", false)
+			output.Write(false)
 		} else {
-			output.Write(0)
-			fmt.Println("short: ",short_float, "long: ", long_float, "action: NONE")
+			fmt.Println(id ," Calculated @ time, ",time.Now(), "variables: ", a_float, " >= ", b_float, "results in: ", true)
+			output.Write(true)
 		}
 	}
 }
@@ -390,6 +381,42 @@ func max_eval( source *Receiver, output *Broadcaster, id string, window int, pri
 	}
 }
 
+
+func simple_2SMA_Strategy(a *Receiver , shortWindow int, longWindow int, quantity int, priceType string, optionalName string) *Receiver{
+	if _, ok := compiler_handlers[optionalName]; ok {
+		listener := compiler_handlers[optionalName].Listen()
+		return &listener
+	}
+	composer := NewBroadcaster()
+	compiler_handlers[optionalName] = composer
+	fmt.Println( optionalName + " created at ", time.Now())
+	buyOrder := GTE(SMA(seriesSource("EUR CASH USD IDEALPRO"), longWindow, priceType,"long"),
+		SMA(seriesSource("EUR CASH USD IDEALPRO"), shortWindow, priceType,"short"), "buyOrder")
+	sellOrder := GTE(SMA(seriesSource("EUR CASH USD IDEALPRO"), shortWindow,priceType,"short"),
+		SMA(seriesSource("EUR CASH USD IDEALPRO"), longWindow, priceType,"long"), "sellOrder")
+	SUBTRACT(sellOrder, buyOrder, optionalName)
+
+
+
+	//buyOrder := GTE(SMA(a, longWindow, priceType,"long"),
+	//	SMA(a, shortWindow, priceType,"short"), "buyOrder")
+	//sellOrder := GTE(SMA(a, shortWindow,priceType,"short"),
+	//	SMA(a, longWindow, priceType,"long"), "sellOrder")
+	//SUBTRACT(sellOrder, buyOrder, optionalName)
+	listener := composer.Listen()
+	listener.name = optionalName
+	return &listener
+}
+
+func simple_2SMA_Strategy_eval( a *Receiver, ){
+
+}
+
+
+func brokerRequest( orderSignal *Receiver){
+
+}
+
 func shift(n []float64) []float64{
 	for i := 0; i < len(n)-1; i++ {
 		n[i] = n[i+1]
@@ -397,5 +424,57 @@ func shift(n []float64) []float64{
 	n = n[:len(n)-1]
 	return n
 }
+
+
+
+var handlers = map[string]Broadcaster{}
+
+func seriesSource(source string ) *Receiver {
+	// addNode, this will be shared by everyone
+	//defer barrier.Done()
+	if _, ok := handlers[source]; ok {
+		listener := handlers[source].Listen()
+		listener.name = source
+		print("Returning same source pointer!" )
+		return &listener
+	}
+
+	composer := NewBroadcaster()
+	handlers[source] = composer
+	composer.name = source
+
+	go sinkSource(&composer, source)
+	listener := composer.Listen()
+	listener.name = source
+	return &listener
+}
+
+func sinkSource( composer *Broadcaster, contract string){
+
+	var hostName = "127.0.0.1"
+	var portNum =  "19192"
+	//var service = hostName + ":" + portNum
+	//var RemoteAddr, _ = net.ResolveUDPAddr("udp", service)
+	println("Starting port: " , portNum)
+	var conn, _ = net.Dial("tcp", hostName + ":"+ portNum)
+
+	message := []byte(contract)  // specify contract details, max period,
+	_, _ = conn.Write(message)
+
+	barrier.Add(1)
+
+	for{
+		// send to socket
+		fmt.Fprintf(conn, "")
+		// listen for reply
+		server_data, err := bufio.NewReader(conn).ReadString('$')
+		if (err == nil){
+			composer.Write(server_data)
+		}
+	}
+
+}
+
+
 
 
