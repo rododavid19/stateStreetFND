@@ -49,7 +49,6 @@ changeCount = 0
 loop_flag = False
 dataArrived = False
 order_ID = 0
-demoAccountID = ""
 
 locks = [""]
 FOREX = [""]
@@ -78,9 +77,8 @@ class TestApp(EWrapper, EClient):
             # data_lock.acquire()
 
 
-            arrived = str(datetime.datetime.utcfromtimestamp(time).strftime('%Y-%m-%d %H:%M:%S')) + " " + str(
-                open_) + " " + str(high) + " " + str(low) + " " + str(close) + "$"
-            print(" Open: " + str(open_) + " High: " + str(high) + " Low: " + str(low) + " Close: " + str(close))
+            arrived =  str(open_) + " " + str(high) + " " + str(low) + " " + str(close) + "$"
+            print( str(datetime.datetime.utcfromtimestamp(time).strftime('%Y-%m-%d %H:%M:%S')) + " Open: " + str(open_) + " High: " + str(high) + " Low: " + str(low) + " Close: " + str(close))
             FOREX.insert(reqId, arrived)
             # if len(FOREX) == 0:
             #     FOREX.insert(reqId, arrived)
@@ -228,7 +226,6 @@ class TestApp(EWrapper, EClient):
 def interactiveBrokers(symbol:str, secType:str, currency:str, exchange:str, orderID:str):
     global line1
     global LineLock
-    global demoAccountID
     LineLock.append(True)
     app = TestApp()
     app.connect("127.0.0.1", 7497, orderID)
@@ -242,13 +239,13 @@ def interactiveBrokers(symbol:str, secType:str, currency:str, exchange:str, orde
     #app.reqMarketDataType(4)
     print("Requesting IB contract by id" , orderID )
 
-    queryTime = (datetime.datetime.today() - datetime.timedelta(days=100)).strftime("%Y%m%d %H:%M:%S")
-    app.reqHistoricalData(int(orderID), contract, queryTime,"1 M", "1 day", "MIDPOINT", 1, 1, False, [] )
-    # app.reqRealTimeBars(int(orderID), contract, 5, "MIDPOINT", False, [])
+    #queryTime = (datetime.datetime.today() - datetime.timedelta(days=100)).strftime("%Y%m%d %H:%M:%S")
+    #app.reqHistoricalData(int(orderID), contract, queryTime,"1 M", "1 day", "MIDPOINT", 1, 1, False, [] )
+    app.reqRealTimeBars(int(orderID), contract, 5, "MIDPOINT", False, [])
 
     # TODO Make sure to change acctcode from being hardcoded
-    # app.reqAccountUpdates(subscribe=True, acctCode=demoAccountID)
-    # app.reqPnL(17001, demoAccountID, "")
+    # app.reqAccountUpdates(subscribe=True, acctCode="DU230026")
+    # app.reqPnL(17001, "DU230004", "")
     # app.pnl(pnlVars[0], pnlVars[1], pnlVars[2], pnlVars[3])
     # order = Order()
     # order.action = "BUY"
@@ -349,9 +346,9 @@ if __name__ == "__main__":
 
 # TODO: UDPServer to TCPServer  -- DONE.
 # TODO: Broker function called by TCP handler  -- half/Done
-# TODO: Golang request parser   -- DONE
 # TODO: P&L plotting function.  https://matplotlib.org/gallery/style_sheets/dark_background.html#sphx-glr-gallery-style-sheets-dark-background-py
-# TODO: FOREX data time synchronization?   -- QUESTION
+
+
 #TODO: add Same Source checkers in prim_eval funcs in golang
 
 
