@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 ## %matplotlib inline              TODO: weird translate from jupter to .py
 import functools
 from primitiveBE import *
+from ctypes import *
+from ctypes import cdll
 
 
 # A tutorial on Python wrappers is at https://realpython.com/primer-on-python-decorators/.
@@ -187,6 +189,40 @@ class Network():
                 raise Exception('What the hell is this doing here -> %r' % obj)
                 
         _report(self, 0)
+
+    class go_string(Structure):
+        _fields_ = [
+            ("p", c_char_p),
+            ("n", c_int)]
+    def goEval(self):
+        network_description = self.goFND_unpack()
+        lib = cdll.LoadLibrary('./libpy.so')
+        lib.py.argtypes = [self.go_string]
+        print("Loaded go generated SO library")
+        message = self.go_string(network_description.encode("utf-8"), network_description.__len__())
+        lib.py(message)
+    def goFND_unpack(self):
+        operators_1 = ["add", "subtract", "greaterOrEqual"]
+        operators_2 = ["sma", "min", "max"]
+        operators_3 = ["ema"]  # ema uses 'span' and not 'window', so it cannot be grouped with ops_2
+        sources = ["seriesSource"]
+        network_description = ""
+        for curr in self.children:
+            if curr.type in sources:
+                continue
+            if curr.type in operators_1:
+                network_description += curr.type + " " + curr.arguments['a'].parent.name + " " + curr.arguments[
+                    'b'].parent.name + " " + curr.name + " , "
+                continue
+            elif curr.type in operators_2:
+                network_description += curr.type + " " + curr.arguments['series'].parent.name + " " + str(
+                   curr.arguments['window']) + " " + curr.name + " , "
+                continue
+            elif curr.type in operators_3:
+                network_description += curr.type + " " + curr.arguments['series'].parent.name + " " + str(
+                    curr.arguments['span']) + " " + curr.name + " , "
+                continue
+        return network_description
                 
 
 

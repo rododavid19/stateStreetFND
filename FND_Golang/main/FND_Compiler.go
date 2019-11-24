@@ -444,6 +444,33 @@ func max_eval( source *Receiver, output *Broadcaster, id string, window int, pri
 	}
 }
 
+func simple_2SMA_Strategy(seriesSource *Receiver , shortWindow int, longWindow int, quantity int, priceType string, optionalName string) *Receiver{
+	if _, ok := compiler_handlers[optionalName]; ok {
+
+		listener := compiler_handlers[optionalName].Listen()
+		return &listener
+	}
+
+	composer := NewBroadcaster()
+	compiler_handlers[optionalName] = composer
+
+	fmt.Println( optionalName + " created at ", time.Now())
+	result:= SUBTRACT(GTE(SMA(seriesSource, longWindow, priceType,"long"), SMA(seriesSource,shortWindow, priceType,"short"), "buyOrder"),
+		GTE(SMA(seriesSource, shortWindow, priceType,"short"), SMA(seriesSource,longWindow, priceType,"long"), "sellOrder"), "Subtract")
+	for v := result.Read(); v != nil; v = result.Read() {
+		//v will always be -1, 0 or 1
+
+
+	}
+
+
+	listener := composer.Listen()
+	listener.name = optionalName
+
+	return &listener
+
+}
+
 func shift(n []float64) []float64{
 	for i := 0; i < len(n)-1; i++ {
 		n[i] = n[i+1]
