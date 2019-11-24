@@ -5,7 +5,7 @@
 
 
 import inspect
-
+import matplotlib.pyplot as plt
 ## %matplotlib inline              TODO: weird translate from jupter to .py
 import functools
 from primitiveBE import *
@@ -627,7 +627,19 @@ def profitCalc(Orders, series: Series, quantity) -> DataFrame:
         if i == 0:
             continue
         toRet.loc[0, toRet.columns[i]] = toRetDict[i - 1]
-    return toRet
+    return profit_and_loss
+
+def graphit(PnL):
+    ax=plt.gca()
+    colNames=PnL.columns
+    CumSum = PnL.expanding(1).sum()
+    for col in colNames:
+        if col == colNames[0]:
+            continue
+        CumSum.plot.line(y=col, ax=ax)
+    plt.show()
+    hello = "mello"
+
 
 SOURCE_TYPES = ['seriesSource', 'dataFrame']
 SINK_TYPES = [seriesSink, DataFrame]

@@ -182,6 +182,7 @@ class testNetwork_SIMPLESMASTRATEGYTESTS(unittest.TestCase):
             sinkDict = piEval(n, sourceDict)
             Orders = sinkDict.get('2SMA/buy_sellOrder')
             Profit_And_Loss = profitCalc(Orders, forex, quantity=20)
+            graphit(Profit_And_Loss)
             n.report()
 
     def test_SIMPLE2SMA_TINY_EZ(self):
