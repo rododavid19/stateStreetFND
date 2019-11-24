@@ -49,7 +49,6 @@ changeCount = 0
 loop_flag = False
 dataArrived = False
 order_ID = 0
-
 demoAccountID = ""
 
 locks = [""]
