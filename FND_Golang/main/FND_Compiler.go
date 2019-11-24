@@ -23,13 +23,15 @@ var price_map = map[string]int{
 }
 
 func SUBTRACT(a *Receiver, b *Receiver, optionalName string ) *Receiver {
-	if _, ok := compiler_handlers[optionalName]; ok {
-		listener := compiler_handlers[optionalName].Listen()
+	signal_id := a.name + " " + b.name
+	if _, ok := compiler_handlers[signal_id]; ok {
+		listener := compiler_handlers[signal_id].Listen()
+		listener.name = optionalName
 		return &listener
 	}
 	composer := NewBroadcaster()
-	compiler_handlers[optionalName] = composer
-	fmt.Println(optionalName + " created at ", time.Now());
+	compiler_handlers[signal_id] = composer
+	fmt.Println("Subtract " +  optionalName + " created at ", time.Now());
 	go subtract_eval(a, b, &composer, optionalName)
 	listener := composer.Listen()
 	listener.name = optionalName
@@ -37,7 +39,7 @@ func SUBTRACT(a *Receiver, b *Receiver, optionalName string ) *Receiver {
 }
 
 func subtract_eval(source_a *Receiver, source_b *Receiver, output *Broadcaster, id string){
-	if( source_a == source_b){
+	if( source_a.master_id == source_b.master_id){
 		for b := source_b.Read(); b != nil; b = source_b.Read() {
 			data_b := fmt.Sprintf("%v", b)
 			println("SAME SOURCE SUBTRACT prim is subtracting: " + data_b + " - " + data_b )
@@ -88,45 +90,37 @@ func ADD(a *Receiver, b *Receiver, optionalName string) *Receiver{
 	add_toSring := a.name + " + " + b.name
 	if _, ok := compiler_handlers[add_toSring]; ok {
 		listener := compiler_handlers[add_toSring].Listen()
+		listener.name = optionalName
 		return &listener
-	}
-	if _, ok := registered_recievers[a.name]; ok {
-		list := compiler_handlers[a.name].Listen()
-		list.name = a.name
-		a = &list
-	}
-	if _, ok := registered_recievers[b.name]; ok {
-		if a!= b{
-			list := compiler_handlers[b.name].Listen()
-			list.name = b.name
-			b = &list
-		}
-	}
-	registered_recievers[a.name] = true
-	if a != b {
-		registered_recievers[b.name] = true
 	}
 	composer := NewBroadcaster()
 	compiler_handlers[add_toSring] = composer
 	fmt.Println( "ADD" + add_toSring + " created at ", time.Now()  );
 	go add_eval( a, b, &composer, add_toSring)
 	listener := composer.Listen()
+	listener.name = optionalName
 	return &listener
 }
 
 func add_eval(source_a *Receiver, source_b *Receiver, output *Broadcaster, id string){
-	//if( source_a == source_b){
-	//	for b := source_b.Read(); b != nil; b = source_b.Read() {
-	//		data_b := fmt.Sprintf("%v", b)
-	//		println("SAME SOURCE ADD prim is adding: " + data_b + " + " + data_b )
-	//	}
-	//	return
-	//}
+	if( source_a.master_id == source_b.master_id){
+		for b := source_b.Read(); b != nil; b = source_b.Read() {
+			data_b := fmt.Sprintf("%v", b)
+			b_float, _ := strconv.ParseFloat(data_b, 64)
+			ret_val := 2 * b_float
+			output.Write(ret_val)
+			fmt.Println("Data b: ", b_float, "Result: ", ret_val)
+		}
+	}
 	for a := source_a.Read(); a != nil; a = source_a.Read() {
 		for b := source_b.Read(); b != nil; {
 			data_a := fmt.Sprintf("%v", a)
 			data_b := fmt.Sprintf("%v", b)
-			println(  "ADD: ", id, " ", data_a,  " + " + data_b )
+			a_float, _ := strconv.ParseFloat(data_a, 64)
+			b_float, _ := strconv.ParseFloat(data_b, 64)
+			ret_val := a_float + b_float
+			output.Write(ret_val)
+			fmt.Println("Data a: ", a_float, "Data b: ", b_float, "Result: ", ret_val)
 			break
 		}
 	}
@@ -138,41 +132,36 @@ func add_eval(source_a *Receiver, source_b *Receiver, output *Broadcaster, id st
 
 
 func SMA( seriesSource *Receiver, window int, priceType string, optionalName string) *Receiver {
-
-	if _, ok := compiler_handlers[optionalName]; ok {
-
-		listener := compiler_handlers[optionalName].Listen()
+	signal_id := seriesSource.name + " " + string(window) + " "+  priceType
+	if _, ok := compiler_handlers[signal_id]; ok {
+		listener := compiler_handlers[signal_id].Listen()
+		listener.name = optionalName
+		print("Returning same SMA signal pointer")
 		return &listener
 	}
-
 	composer := NewBroadcaster()
-	compiler_handlers[optionalName] = composer
-
-	fmt.Println( optionalName + " created at ", time.Now()  );
-	go sma_eval( seriesSource,&composer, optionalName, window)
-
+	composer.name = optionalName
+	compiler_handlers[signal_id] = composer
+	fmt.Println(  "SMA " + signal_id + " created at ", time.Now()  );
+	go sma_eval( seriesSource,&composer, optionalName, window, priceType)
 	listener := composer.Listen()
 	listener.name = optionalName
-
 	return &listener
 
 }
 //defer barrier.Done()
 
 
-
-func sma_eval( source *Receiver, output *Broadcaster, id string, window int) {
+func sma_eval( source *Receiver, output *Broadcaster, id string, window int, priceType string) {
 
 	barrier.Add(1)
 
-	//openPrices := []float64{}
-	//highPrices := []float64{}
-	//composer := NewBroadcaster()
+	index := price_map[priceType]
+	barrier.Add(1)
 	closePrices := []float64{}
-
 	r := source
 	for v := r.Read(); v != nil; v = r.Read() {
-		close_price := strings.TrimSuffix(strings.Split(v.(string), " ")[5], "$")
+		close_price := strings.TrimSuffix(strings.Split(v.(string), " ")[index], "$")
 		close_price = strings.TrimSuffix(close_price, ",") 
 		close_float, _ := strconv.ParseFloat(close_price, 64)
 		ret_value := math.NaN()
@@ -187,23 +176,6 @@ func sma_eval( source *Receiver, output *Broadcaster, id string, window int) {
 			}
 			ret_value = sum/float64(len(closePrices))
 		}
-		//var num_sets = float64(len(res1))/8 //count how many sets of data are there
-		//sets_int := math.Round(num_sets)
-		//if num_sets > sets_int{
-		//	sets_int += 1
-		//}
-		//for i := 0.0 ; i < sets_int; i++{ //if array length is window size, shift the array to accommodate how many closing prices will be added
-		//	if float64(len(closePrices)) + i > float64(window){
-		//		closePrices = shift(closePrices)
-		//	}
-		//}
-		//for i := 0; i < len(res1); i++{
-		//	if strings.Contains(res1[i], "Close"){
-		//		close_price := strings.Split(res1[i], " ")
-		//		close_float, _ := strconv.ParseFloat(close_price[2], 64)
-		//		closePrices = append(closePrices, close_float)
-		//	}
-		//}
 		if id == "short"{
 			fmt.Println("sma_short_variables", closePrices, "resulted in ", ret_value)
 		} else if id == "long"{
@@ -216,30 +188,32 @@ func sma_eval( source *Receiver, output *Broadcaster, id string, window int) {
 }
 
 func GTE(a *Receiver, b *Receiver, optionalName string ) *Receiver {
-
-	if _, ok := compiler_handlers[optionalName]; ok {
-
-		listener := compiler_handlers[optionalName].Listen()
+	signal_id := a.name + " " + b.name
+	if _, ok := compiler_handlers[signal_id]; ok {
+		listener := compiler_handlers[signal_id].Listen()
+		listener.name = optionalName
 		return &listener
 	}
-
 	composer := NewBroadcaster()
-	compiler_handlers[optionalName] = composer
-
-	fmt.Println( optionalName + " created at ", time.Now()  );
+	composer.name = optionalName
+	compiler_handlers[signal_id] = composer
+	fmt.Println( "GTE " + signal_id + " created at ", time.Now()  );
 	go gte_eval(a, b, &composer, optionalName)
-
 	listener := composer.Listen()
 	listener.name = optionalName
-
 	return &listener
-
 }
 //defer barrier.Done()
 
 
 /* greater than only checks to see if the first source is greater than or equal the second*/
 func gte_eval(a *Receiver, b *Receiver, output *Broadcaster, id string) {
+	if( a.master_id == b.master_id){
+		for b2 := b.Read(); b2 != nil; b2 = b.Read() {
+			print("GTE SAME")
+			output.Write(true)
+		}
+	}
 	barrier.Add(1)
 	for b_read := b.Read(); b_read != nil; b_read = b.Read() {
 		a_read := a.Read()
@@ -260,52 +234,38 @@ func gte_eval(a *Receiver, b *Receiver, output *Broadcaster, id string) {
 			fmt.Println(id ," Calculated @ time, ",time.Now(), "variables: ", a_float, " >= ", b_float, "results in: ", true)
 			output.Write(true)
 		}
-
-		//if short_float > long_float{
-		//	output.Write(1)
-		//	fmt.Println("short: ",short_float, "long: ", long_float, "action: SELL")
-		//} else if short_float < long_float{
-		//	output.Write(-1)
-		//	fmt.Println("short: ",short_float, "long: ", long_float, "action: BUY")
-		//} else {
-		//	output.Write(0)
-		//	fmt.Println("short: ",short_float, "long: ", long_float, "action: NONE")
-		//}
 	}
 }
 
 /* exponential moving average is like simple moving average but takes the age of each data point into account*/
-func EMA( seriesSource *Receiver, window int, optionalName string ) *Receiver {
+func EMA( seriesSource *Receiver, window int, priceType string, optionalName string) *Receiver {
 
-	if _, ok := compiler_handlers[optionalName]; ok {
+	signal_id := seriesSource.name + " " + string(window) + " "+  priceType
 
-		listener := compiler_handlers[optionalName].Listen()
+	if _, ok := compiler_handlers[signal_id]; ok {
+		listener := compiler_handlers[signal_id].Listen()
+		listener.name = optionalName
 		return &listener
 	}
-
 	composer := NewBroadcaster()
-	compiler_handlers[optionalName] = composer
-
+	compiler_handlers[signal_id] = composer
 	fmt.Println( optionalName + " created at ", time.Now()  )
-	go ema_eval( seriesSource,&composer, optionalName, window)
-
+	go ema_eval(seriesSource,&composer, optionalName, window, priceType)
 	listener := composer.Listen()
 	listener.name = optionalName
-
 	return &listener
-
 }
 
 
-func ema_eval( source *Receiver, output *Broadcaster, id string, window int) {
-
+func ema_eval( source *Receiver, output *Broadcaster, id string, window int, priceType string) {
+	index := price_map[priceType]
 	barrier.Add(1)
 	ema_prev := -10.0
 	closePrices := []float64{}
-
 	r := source
 	for v := r.Read(); v != nil; v = r.Read() {
-		close_price := strings.TrimSuffix(strings.Split(v.(string), " ")[5], "$")
+		close_price := strings.TrimSuffix(strings.Split(v.(string), " ")[index], "$")
+		close_price = strings.TrimSuffix(close_price, ",")
 		close_float, _ := strconv.ParseFloat(close_price, 64)
 		ret_value := math.NaN()
 		if len(closePrices) == window{
@@ -325,7 +285,6 @@ func ema_eval( source *Receiver, output *Broadcaster, id string, window int) {
 				ema_prev = ema_res
 			}
 		}
-
 		if ema_prev == -10.0 {
 			ret_value = 0.0
 		} else {
@@ -336,35 +295,31 @@ func ema_eval( source *Receiver, output *Broadcaster, id string, window int) {
 	}
 }
 
-func MIN( seriesSource *Receiver, window int, optionalName string ) *Receiver {
 
-	if _, ok := compiler_handlers[optionalName]; ok {
-
-		listener := compiler_handlers[optionalName].Listen()
+func MIN( seriesSource *Receiver, window int, priceType string, optionalName string) *Receiver {
+	signal_id := seriesSource.name + " " + string(window) + " "+  priceType
+	if _, ok := compiler_handlers[signal_id]; ok {
+		listener := compiler_handlers[signal_id].Listen()
+		listener.name = optionalName
 		return &listener
 	}
-
 	composer := NewBroadcaster()
-	compiler_handlers[optionalName] = composer
-
-	fmt.Println( optionalName + " created at ", time.Now()  )
-	go min_eval( seriesSource,&composer, optionalName, window)
-
+	compiler_handlers[signal_id] = composer
+	fmt.Println( "MIN " + signal_id + " created at ", time.Now()  )
+	go min_eval( seriesSource,&composer, optionalName, window, priceType)
 	listener := composer.Listen()
 	listener.name = optionalName
-
 	return &listener
-
 }
 
-
-func min_eval( source *Receiver, output *Broadcaster, id string, window int) {
+func min_eval( source *Receiver, output *Broadcaster, id string, window int, priceType string) {
+	index := price_map[priceType]
 	barrier.Add(1)
 	closePrices := []float64{}
-
 	r := source
 	for v := r.Read(); v != nil; v = r.Read() {
-		close_price := strings.TrimSuffix(strings.Split(v.(string), " ")[5], "$")
+		close_price := strings.TrimSuffix(strings.Split(v.(string), " ")[index], "$")
+		close_price = strings.TrimSuffix(close_price, ",")
 		close_float, _ := strconv.ParseFloat(close_price, 64)
 		ret_value := math.NaN()
 		if len(closePrices) == window{
@@ -372,48 +327,47 @@ func min_eval( source *Receiver, output *Broadcaster, id string, window int) {
 		}
 		closePrices = append(closePrices, close_float)
 		if len(closePrices) == window{
-			ret_value = 0.0
+			ret_value := math.NaN()
 			for i:= 0; i < len(closePrices); i++{
-				if ret_value > closePrices[i]{
+				if math.IsNaN(ret_value){
+					ret_value = closePrices[i]
+				} else if ret_value > closePrices[i]{
 					ret_value = closePrices[i]
 				}
 			}
 		}
-
 		output.Write(ret_value)
 		fmt.Println(id, " RECEIVED at time ", time.Now()   , " from receiver ", source.name  )
 	}
 }
 
-func MAX( seriesSource *Receiver, window int, optionalName string ) *Receiver {
 
-	if _, ok := compiler_handlers[optionalName]; ok {
 
-		listener := compiler_handlers[optionalName].Listen()
+func MAX( seriesSource *Receiver, window int, priceType string, optionalName string) *Receiver {
+	signal_id := seriesSource.name + " " + string(window) + " "+  priceType
+	if _, ok := compiler_handlers[signal_id]; ok {
+		listener := compiler_handlers[signal_id].Listen()
+		listener.name = optionalName
 		return &listener
 	}
-
 	composer := NewBroadcaster()
-	compiler_handlers[optionalName] = composer
-
-	fmt.Println( optionalName + " created at ", time.Now()  )
-	go max_eval( seriesSource,&composer, optionalName, window)
-
+	compiler_handlers[signal_id] = composer
+	fmt.Println( "MAX " +  signal_id + " created at ", time.Now()  )
+	go max_eval( seriesSource,&composer, optionalName, window, priceType)
 	listener := composer.Listen()
 	listener.name = optionalName
-
 	return &listener
-
 }
 
 
-func max_eval( source *Receiver, output *Broadcaster, id string, window int) {
+func max_eval( source *Receiver, output *Broadcaster, id string, window int, priceType string) {
+	index := price_map[priceType]
 	barrier.Add(1)
 	closePrices := []float64{}
-
 	r := source
 	for v := r.Read(); v != nil; v = r.Read() {
-		close_price := strings.TrimSuffix(strings.Split(v.(string), " ")[5], "$")
+		close_price := strings.TrimSuffix(strings.Split(v.(string), " ")[index], "$")
+		close_price = strings.TrimSuffix(close_price, ",")
 		close_float, _ := strconv.ParseFloat(close_price, 64)
 		ret_value := math.NaN()
 		if len(closePrices) == window{
@@ -421,14 +375,15 @@ func max_eval( source *Receiver, output *Broadcaster, id string, window int) {
 		}
 		closePrices = append(closePrices, close_float)
 		if len(closePrices) == window{
-			ret_value = 0.0
+			ret_value := math.NaN()
 			for i:= 0; i < len(closePrices); i++{
-				if ret_value < closePrices[i]{
+				if math.IsNaN(ret_value){
+					ret_value = closePrices[i]
+				} else if ret_value < closePrices[i]{
 					ret_value = closePrices[i]
 				}
 			}
 		}
-
 		output.Write(ret_value)
 		fmt.Println(id, " RECEIVED at time ", time.Now()   , " from receiver ", source.name  )
 	}
