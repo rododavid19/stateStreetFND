@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"math"
+	"net"
 	"strconv"
 	"strings"
 	"sync"
@@ -149,20 +151,15 @@ func SMA( seriesSource *Receiver, window int, priceType string, optionalName str
 	return &listener
 
 }
-//defer barrier.Done()
-
-
 func sma_eval( source *Receiver, output *Broadcaster, id string, window int, priceType string) {
-
-	barrier.Add(1)
 
 	index := price_map[priceType]
 	barrier.Add(1)
 	closePrices := []float64{}
 	r := source
 	for v := r.Read(); v != nil; v = r.Read() {
-		close_price := strings.TrimSuffix(strings.Split(v.(string), " ")[index], "$")
-		close_price = strings.TrimSuffix(close_price, ",") 
+		close_price := strings.TrimSuffix(strings.Split(v.(string), " ")[index], "$") //TODO used to be 5
+		close_price = strings.TrimSuffix(close_price, ",")
 		close_float, _ := strconv.ParseFloat(close_price, 64)
 		ret_value := math.NaN()
 		if len(closePrices) == window{
@@ -203,10 +200,6 @@ func GTE(a *Receiver, b *Receiver, optionalName string ) *Receiver {
 	listener.name = optionalName
 	return &listener
 }
-//defer barrier.Done()
-
-
-/* greater than only checks to see if the first source is greater than or equal the second*/
 func gte_eval(a *Receiver, b *Receiver, output *Broadcaster, id string) {
 	if( a.master_id == b.master_id){
 		for b2 := b.Read(); b2 != nil; b2 = b.Read() {
@@ -226,7 +219,6 @@ func gte_eval(a *Receiver, b *Receiver, output *Broadcaster, id string) {
 		}
 		a_float, _ := strconv.ParseFloat(a_string, 64)
 		b_float, _ := strconv.ParseFloat(b_string, 64)
-
 		if a_float < b_float{
 			fmt.Println(id ," Calculated @ time, ",time.Now(), "variables: ", a_float, " < ", b_float, "results in: ", false)
 			output.Write(false)
@@ -389,33 +381,39 @@ func max_eval( source *Receiver, output *Broadcaster, id string, window int, pri
 	}
 }
 
+
 func simple_2SMA_Strategy(a *Receiver , shortWindow int, longWindow int, quantity int, priceType string, optionalName string) *Receiver{
 	if _, ok := compiler_handlers[optionalName]; ok {
-
 		listener := compiler_handlers[optionalName].Listen()
 		return &listener
 	}
-
 	composer := NewBroadcaster()
 	compiler_handlers[optionalName] = composer
-
 	fmt.Println( optionalName + " created at ", time.Now())
 	buyOrder := GTE(SMA(seriesSource("EUR CASH USD IDEALPRO"), longWindow, priceType,"long"),
 		SMA(seriesSource("EUR CASH USD IDEALPRO"), shortWindow, priceType,"short"), "buyOrder")
 	sellOrder := GTE(SMA(seriesSource("EUR CASH USD IDEALPRO"), shortWindow,priceType,"short"),
 		SMA(seriesSource("EUR CASH USD IDEALPRO"), longWindow, priceType,"long"), "sellOrder")
 	SUBTRACT(sellOrder, buyOrder, optionalName)
+
+
+
 	//buyOrder := GTE(SMA(a, longWindow, priceType,"long"),
 	//	SMA(a, shortWindow, priceType,"short"), "buyOrder")
 	//sellOrder := GTE(SMA(a, shortWindow,priceType,"short"),
 	//	SMA(a, longWindow, priceType,"long"), "sellOrder")
 	//SUBTRACT(sellOrder, buyOrder, optionalName)
-
-
 	listener := composer.Listen()
 	listener.name = optionalName
-
 	return &listener
+}
+
+func simple_2SMA_Strategy_eval( a *Receiver, ){
+
+}
+
+
+func brokerRequest( orderSignal *Receiver){
 
 }
 
@@ -426,3 +424,57 @@ func shift(n []float64) []float64{
 	n = n[:len(n)-1]
 	return n
 }
+
+
+
+var handlers = map[string]Broadcaster{}
+
+func seriesSource(source string ) *Receiver {
+	// addNode, this will be shared by everyone
+	//defer barrier.Done()
+	if _, ok := handlers[source]; ok {
+		listener := handlers[source].Listen()
+		listener.name = source
+		print("Returning same source pointer!" )
+		return &listener
+	}
+
+	composer := NewBroadcaster()
+	handlers[source] = composer
+	composer.name = source
+
+	go sinkSource(&composer, source)
+	listener := composer.Listen()
+	listener.name = source
+	return &listener
+}
+
+func sinkSource( composer *Broadcaster, contract string){
+
+	var hostName = "127.0.0.1"
+	var portNum =  "19192"
+	//var service = hostName + ":" + portNum
+	//var RemoteAddr, _ = net.ResolveUDPAddr("udp", service)
+	println("Starting port: " , portNum)
+	var conn, _ = net.Dial("tcp", hostName + ":"+ portNum)
+
+	message := []byte(contract)  // specify contract details, max period,
+	_, _ = conn.Write(message)
+
+	barrier.Add(1)
+
+	for{
+		// send to socket
+		fmt.Fprintf(conn, "")
+		// listen for reply
+		server_data, err := bufio.NewReader(conn).ReadString('$')
+		if (err == nil){
+			composer.Write(server_data)
+		}
+	}
+
+}
+
+
+
+

@@ -78,8 +78,8 @@ class TestApp(EWrapper, EClient):
             # data_lock.acquire()
 
 
-            arrived = str(open_) + " " + str(high) + " " + str(low) + " " + str(close) + "$"
-            print(" Open: " + str(open_) + " High: " + str(high) + " Low: " + str(low) + " Close: " + str(close))
+            arrived =  str(open_) + " " + str(high) + " " + str(low) + " " + str(close) + "$"
+            print( str(datetime.datetime.utcfromtimestamp(time).strftime('%Y-%m-%d %H:%M:%S')) + " Open: " + str(open_) + " High: " + str(high) + " Low: " + str(low) + " Close: " + str(close))
             FOREX.insert(reqId, arrived)
             # if len(FOREX) == 0:
             #     FOREX.insert(reqId, arrived)
