@@ -37,14 +37,14 @@ func SUBTRACT(a *Receiver, b *Receiver, optionalName string ) *Receiver {
 }
 
 func subtract_eval(source_a *Receiver, source_b *Receiver, output *Broadcaster, id string){
-	if(source_a == source_b){
-		for b := source_b.Read(); b != nil; b = source_b.Read() {
-			data_b := fmt.Sprintf("%v", b)
-			println("SAME SOURCE SUBTRACT prim is subtracting: " + data_b + " - " + data_b )
-			output.Write(0)
-		}
-		return
-	}
+	//if(source_a == source_b){
+	//	for b := source_b.Read(); b != nil; b = source_b.Read() {
+	//		data_b := fmt.Sprintf("%v", b)
+	//		println("SAME SOURCE SUBTRACT prim is subtracting: " + data_b + " - " + data_b )
+	//		output.Write(0)
+	//	}
+	//	return
+	//}
 	for a := source_a.Read(); a != nil; a = source_a.Read() {
 		for b := source_b.Read(); b != nil; {
 			data_a := fmt.Sprintf("%v", a)
@@ -61,7 +61,7 @@ func subtract_eval(source_a *Receiver, source_b *Receiver, output *Broadcaster, 
 						b_val = 1
 					}
 					if a_val == 0 && b_val == 0{
-						fmt.Print("Error both inputs were 0")
+						fmt.Println("Error both inputs to " + id + " were 0")
 					}
 					ret_val := a_val - b_val
 					output.Write(ret_val)
@@ -116,13 +116,13 @@ func ADD(a *Receiver, b *Receiver, optionalName string) *Receiver{
 }
 
 func add_eval(source_a *Receiver, source_b *Receiver, output *Broadcaster, id string){
-	if( source_a == source_b){
-		for b := source_b.Read(); b != nil; b = source_b.Read() {
-			data_b := fmt.Sprintf("%v", b)
-			println("SAME SOURCE ADD prim is adding: " + data_b + " + " + data_b )
-		}
-		return
-	}
+	//if( source_a == source_b){
+	//	for b := source_b.Read(); b != nil; b = source_b.Read() {
+	//		data_b := fmt.Sprintf("%v", b)
+	//		println("SAME SOURCE ADD prim is adding: " + data_b + " + " + data_b )
+	//	}
+	//	return
+	//}
 	for a := source_a.Read(); a != nil; a = source_a.Read() {
 		for b := source_b.Read(); b != nil; {
 			data_a := fmt.Sprintf("%v", a)
@@ -243,14 +243,14 @@ func GTE(a *Receiver, b *Receiver, optionalName string ) *Receiver {
 /* greater than only checks to see if the first source is greater than or equal the second*/
 func gte_eval(a *Receiver, b *Receiver, output *Broadcaster, id string) {
 	barrier.Add(1)
-	if(a == b){
-		for b2 := b.Read(); b2 != nil; b2 = b.Read() {
-			data_b := fmt.Sprintf("%v", b2)
-			println("SAME SOURCE GTE prim is evaluating: " + data_b + " >= " + data_b )
-			output.Write("TRUE")
-		}
-		return
-	}
+	//if(a == b){
+	//	for b2 := b.Read(); b2 != nil; b2 = b.Read() {
+	//		data_b := fmt.Sprintf("%v", b2)
+	//		println("SAME SOURCE GTE prim is evaluating: " + data_b + " >= " + data_b )
+	//		output.Write("TRUE")
+	//	}
+	//	return
+	//}
 	for b_read := b.Read(); b_read != nil; b_read = b.Read() {
 		a_read := a.Read()
 		fmt.Println(id, " RECEIVED at time ", time.Now()   , " from A receiver ", a.name  ); //v);
@@ -444,7 +444,7 @@ func max_eval( source *Receiver, output *Broadcaster, id string, window int, pri
 	}
 }
 
-func simple_2SMA_Strategy(seriesSource *Receiver , shortWindow int, longWindow int, quantity int, priceType string, optionalName string) *Receiver{
+func simple_2SMA_Strategy(a *Receiver , shortWindow int, longWindow int, quantity int, priceType string, optionalName string) *Receiver{
 	if _, ok := compiler_handlers[optionalName]; ok {
 
 		listener := compiler_handlers[optionalName].Listen()
@@ -455,13 +455,16 @@ func simple_2SMA_Strategy(seriesSource *Receiver , shortWindow int, longWindow i
 	compiler_handlers[optionalName] = composer
 
 	fmt.Println( optionalName + " created at ", time.Now())
-	result:= SUBTRACT(GTE(SMA(seriesSource, longWindow, priceType,"long"), SMA(seriesSource,shortWindow, priceType,"short"), "buyOrder"),
-		GTE(SMA(seriesSource, shortWindow, priceType,"short"), SMA(seriesSource,longWindow, priceType,"long"), "sellOrder"), "Subtract")
-	for v := result.Read(); v != nil; v = result.Read() {
-		//v will always be -1, 0 or 1
-
-
-	}
+	buyOrder := GTE(SMA(seriesSource("EUR CASH USD IDEALPRO"), longWindow, priceType,"long"),
+		SMA(seriesSource("EUR CASH USD IDEALPRO"), shortWindow, priceType,"short"), "buyOrder")
+	sellOrder := GTE(SMA(seriesSource("EUR CASH USD IDEALPRO"), shortWindow,priceType,"short"),
+		SMA(seriesSource("EUR CASH USD IDEALPRO"), longWindow, priceType,"long"), "sellOrder")
+	SUBTRACT(sellOrder, buyOrder, optionalName)
+	//buyOrder := GTE(SMA(a, longWindow, priceType,"long"),
+	//	SMA(a, shortWindow, priceType,"short"), "buyOrder")
+	//sellOrder := GTE(SMA(a, shortWindow,priceType,"short"),
+	//	SMA(a, longWindow, priceType,"long"), "sellOrder")
+	//SUBTRACT(sellOrder, buyOrder, optionalName)
 
 
 	listener := composer.Listen()
