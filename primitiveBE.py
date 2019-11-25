@@ -24,6 +24,9 @@ def ADD(p):
 def SUBTRACT(p):
         a = p.arguments["a"].parent.arguments.data
         b = p.arguments["b"].parent.arguments.data
+        if type(a) and type(b) is pd.Series:
+            p.arguments.data = pd.Series(a - b)
+            return
         bool_lock = False
         for col in a.columns:
             if a[col].dtype != bool or b[col].dtype != bool:
@@ -36,13 +39,10 @@ def SUBTRACT(p):
             b2 = b.astype(int)
             if type(a) and type(b) is pd.DataFrame:
                 p.arguments.data = pd.DataFrame(a2 - b2)
-            if type(a) and type(b) is pd.Series:
-                p.arguments.data = pd.Series(a2 - b2)
             return
         if type(a) and type(b) is pd.DataFrame:
             p.arguments.data = pd.DataFrame(a - b)
-        if type(a) and type(b) is pd.Series:
-            p.arguments.data = pd.Series(a - b)
+
 
     # Multiply(a, b, product)
 def MULTIPLY(p):

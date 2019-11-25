@@ -192,7 +192,7 @@ class TestApp(EWrapper, EClient):
         super().pnl(reqId, dailyPnL, unrealizedPnL, realizedPnL)
         Daily_PnL_Vals.append(dailyPnL)
         Daily_PnL_Time.append(datetime.datetime.now())
-        line1 = self.graphIt()
+        #line1 = self.graphIt()
         print("Daily PnL. ReqId:", reqId, "DailyPnL:", dailyPnL,
               "UnrealizedPnL:", unrealizedPnL, "RealizedPnL:", realizedPnL)
 
@@ -244,15 +244,14 @@ def interactiveBrokers(symbol:str, secType:str, currency:str, exchange:str, orde
     app.reqRealTimeBars(int(orderID), contract, 5, "MIDPOINT", False, [])
 
     # TODO Make sure to change acctcode from being hardcoded
-    # app.reqAccountUpdates(subscribe=True, acctCode="DU230026")
-    # app.reqPnL(17001, "DU230004", "")
-    # app.pnl(pnlVars[0], pnlVars[1], pnlVars[2], pnlVars[3])
-    # order = Order()
-    # order.action = "BUY"
-    # order.orderType = "LMT"
-    # order.totalQuantity = 20
-    # order.lmtPrice = 108.525
-    # app.placeOrder(1, contract, order)
+    app.reqAccountUpdates(subscribe=True, acctCode="DU230026")
+    app.reqPnL(17001, "DU230022", "")
+    app.pnl(pnlVars[0], pnlVars[1], pnlVars[2], pnlVars[3])
+    #order = Order()
+    #order.action = "BUY"
+    #order.orderType = "MKT"
+    #order.totalQuantity = 20000
+    #app.placeOrder(1, contract, order)
     app.run()
 
 
@@ -350,6 +349,5 @@ if __name__ == "__main__":
 
 
 #TODO: add Same Source checkers in prim_eval funcs in golang
-
 
 

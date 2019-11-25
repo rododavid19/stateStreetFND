@@ -5,10 +5,12 @@
 
 
 import inspect
-
+import matplotlib.pyplot as plt
 ## %matplotlib inline              TODO: weird translate from jupter to .py
 import functools
 from primitiveBE import *
+from ctypes import *
+from ctypes import cdll
 
 
 # A tutorial on Python wrappers is at https://realpython.com/primer-on-python-decorators/.
@@ -187,6 +189,40 @@ class Network():
                 raise Exception('What the hell is this doing here -> %r' % obj)
                 
         _report(self, 0)
+
+    class go_string(Structure):
+        _fields_ = [
+            ("p", c_char_p),
+            ("n", c_int)]
+    def goEval(self):
+        network_description = self.goFND_unpack()
+        lib = cdll.LoadLibrary('./libpy.so')
+        lib.py.argtypes = [self.go_string]
+        print("Loaded go generated SO library")
+        message = self.go_string(network_description.encode("utf-8"), network_description.__len__())
+        lib.py(message)
+    def goFND_unpack(self):
+        operators_1 = ["add", "subtract", "greaterOrEqual"]
+        operators_2 = ["sma", "min", "max"]
+        operators_3 = ["ema"]  # ema uses 'span' and not 'window', so it cannot be grouped with ops_2
+        sources = ["seriesSource"]
+        network_description = ""
+        for curr in self.children:
+            if curr.type in sources:
+                continue
+            if curr.type in operators_1:
+                network_description += curr.type + " " + curr.arguments['a'].parent.name + " " + curr.arguments[
+                    'b'].parent.name + " " + curr.name + " , "
+                continue
+            elif curr.type in operators_2:
+                network_description += curr.type + " " + curr.arguments['series'].parent.name + " " + str(
+                   curr.arguments['window']) + " " + curr.name + " , "
+                continue
+            elif curr.type in operators_3:
+                network_description += curr.type + " " + curr.arguments['series'].parent.name + " " + str(
+                    curr.arguments['span']) + " " + curr.name + " , "
+                continue
+        return network_description
                 
 
 
@@ -426,7 +462,7 @@ def addTicks(series: Series, ticks, name: str=None) -> Series:
 ## Operations on Fixed-Size Rolling Windows ##
 
 @primitive
-def sma(series: Series, window: int, name: str=None) -> Series:
+def sma(series: Series, window: int, name: str=None, priceType: str=None) -> Series:
     if(window > 0):
         return Series(name, series)
     else:
@@ -440,7 +476,7 @@ def stdev(series: Series, window: int=None, name: str=None) -> Series:
         raise Exception("window size must be greater than zero")
 
 @primitive
-def min(series: Series, window: int=None, name: str=None) -> Series:
+def min(series: Series, window: int=None, name: str=None, priceType: str=None) -> Series:
     if(window > 0):
         return Series(name, series)
     else:
@@ -448,7 +484,7 @@ def min(series: Series, window: int=None, name: str=None) -> Series:
 
 
 @primitive
-def max(series: Series, window: int=None, name: str=None) -> Series:
+def max(series: Series, window: int=None, name: str=None, priceType: str=None) -> Series:
     if(window > 0):
         return Series(name, series)
     else:
@@ -468,7 +504,7 @@ def delay(series: Series, samples: int, name: str=None) -> Series:
 
 ## Exponentially-Weighted Operations ##
 @primitive
-def ema(series: Series, span: int, name: str=None) -> Series:
+def ema(series: Series, span: int, name: str=None, priceType: str=None) -> Series:
     return Series(name, series)
 
 
@@ -587,6 +623,18 @@ def simple_2SMA_Strategy(series: Series, shortWindow: int=None, longWindow: int=
     #return dataFrame({'buy_sellOrder': buy_sellOrder, 'profit_and_loss': profit_and_loss2, 'sum_Profit_Loss': sum_Profit_Loss}, name='df')
     return dataFrame({'buy_sellOrder': buy_sellOrder})
 
+@module
+def simple_2EMA_Strategy(series: Series, shortWindow: int=None, longWindow: int=None, quantity: int=None, name: str=None) -> DataFrame:
+    #if ema_short < ema_long  -> Buy
+    #else if ema_short > ema_long -> Sell
+    #else (ema_short = ema_long) -> Do nothing
+    ema_short = ema(series, shortWindow, name='short')
+    ema_long = ema(series, longWindow, name='long')
+    sellOrder = greaterOrEqual(ema_short, ema_long, name='sellOrder')
+    buyOrder = greaterOrEqual(ema_long, ema_short, name='buyOrder')
+    buy_sellOrder = subtract(sellOrder, buyOrder, name='buy_sellOrder')
+    return dataFrame({'buy_sellOrder': buy_sellOrder})
+
 
 @module
 def simple_3SMA_Strategy(series: Series, shortestWindow: int=None, shortWindow: int=None, longWindow: int=None, name: str=None) -> DataFrame:
@@ -627,7 +675,21 @@ def profitCalc(Orders, series: Series, quantity) -> DataFrame:
         if i == 0:
             continue
         toRet.loc[0, toRet.columns[i]] = toRetDict[i - 1]
-    return toRet
+    return profit_and_loss
+
+def graphit(PnL, Filename):
+    YearMonth = Filename[19:23] + "/" + Filename[23:25]  # Only works for the historical data files from histdata.org
+    ax=plt.gca()
+    colNames=list(PnL)
+    CumSum = PnL.expanding(1).sum()
+    if (CumSum[colNames[-1]] == 0).all():
+        colNames.remove(colNames[-1])
+    for col in colNames:
+        if col == colNames[0]:
+            continue
+        CumSum.plot.line(y=col, ax=ax, figsize=(13, 6), title="Historical Profit and Loss(USD): " +YearMonth)
+    plt.show()
+
 
 SOURCE_TYPES = ['seriesSource', 'dataFrame']
 SINK_TYPES = [seriesSink, DataFrame]
