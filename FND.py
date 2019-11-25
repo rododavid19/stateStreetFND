@@ -623,6 +623,18 @@ def simple_2SMA_Strategy(series: Series, shortWindow: int=None, longWindow: int=
     #return dataFrame({'buy_sellOrder': buy_sellOrder, 'profit_and_loss': profit_and_loss2, 'sum_Profit_Loss': sum_Profit_Loss}, name='df')
     return dataFrame({'buy_sellOrder': buy_sellOrder})
 
+@module
+def simple_2EMA_Strategy(series: Series, shortWindow: int=None, longWindow: int=None, quantity: int=None, name: str=None) -> DataFrame:
+    #if ema_short < ema_long  -> Buy
+    #else if ema_short > ema_long -> Sell
+    #else (ema_short = ema_long) -> Do nothing
+    ema_short = ema(series, shortWindow, name='short')
+    ema_long = ema(series, longWindow, name='long')
+    sellOrder = greaterOrEqual(ema_short, ema_long, name='sellOrder')
+    buyOrder = greaterOrEqual(ema_long, ema_short, name='buyOrder')
+    buy_sellOrder = subtract(sellOrder, buyOrder, name='buy_sellOrder')
+    return dataFrame({'buy_sellOrder': buy_sellOrder})
+
 
 @module
 def simple_3SMA_Strategy(series: Series, shortestWindow: int=None, shortWindow: int=None, longWindow: int=None, name: str=None) -> DataFrame:

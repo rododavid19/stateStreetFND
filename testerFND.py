@@ -66,24 +66,6 @@ def randomWalkSeries4(initialValue= -100, sigma=.002, start='2019-01-01', end='2
 
 
 with Network() as n:
-# 'forex': forex,
-
-    sourceDict = { 'fake':randomWalkSeries()}  # here series are loaded
-
-   # a = seriesSource('fake')
-  #  a = -a
- #   a += a
-    macd(seriesSource('fake'))
-    add()
-    ema(seriesSource('fake'))
-    add(seriesSource('fake'), seriesSource('fake') )
-   # macd(seriesSource('fake'))
-   # x = ema(seriesSource('fake'),10)
-   # y = ema(seriesSource('fake'),10)
-   # z = x - y
-   # w = z - x
-
-    sinkDict = piEval(n, sourceDict)
     n.report()
 
 

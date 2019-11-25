@@ -32,6 +32,7 @@ func SUBTRACT(a *Receiver, b *Receiver, optionalName string ) *Receiver {
 		return &listener
 	}
 	composer := NewBroadcaster()
+	composer.name = optionalName
 	compiler_handlers[signal_id] = composer
 	fmt.Println("Subtract " +  optionalName + " created at ", time.Now());
 	go subtract_eval(a, b, &composer, optionalName)
@@ -96,6 +97,7 @@ func ADD(a *Receiver, b *Receiver, optionalName string) *Receiver{
 		return &listener
 	}
 	composer := NewBroadcaster()
+	composer.name = optionalName
 	compiler_handlers[add_toSring] = composer
 	fmt.Println( "ADD" + add_toSring + " created at ", time.Now()  );
 	go add_eval( a, b, &composer, add_toSring)
@@ -144,7 +146,7 @@ func SMA( seriesSource *Receiver, window int, priceType string, optionalName str
 	composer := NewBroadcaster()
 	composer.name = optionalName
 	compiler_handlers[signal_id] = composer
-	fmt.Println(  "SMA " + signal_id + " created at ", time.Now()  );
+	fmt.Println(  "SMA " + signal_id + " created at ", time.Now());
 	go sma_eval( seriesSource,&composer, optionalName, window, priceType)
 	listener := composer.Listen()
 	listener.name = optionalName
@@ -201,7 +203,7 @@ func GTE(a *Receiver, b *Receiver, optionalName string ) *Receiver {
 	return &listener
 }
 func gte_eval(a *Receiver, b *Receiver, output *Broadcaster, id string) {
-	if( a.master_id == b.master_id){
+	if(a.master_id == b.master_id){
 		for b2 := b.Read(); b2 != nil; b2 = b.Read() {
 			print("GTE SAME")
 			output.Write(true)
@@ -231,15 +233,14 @@ func gte_eval(a *Receiver, b *Receiver, output *Broadcaster, id string) {
 
 /* exponential moving average is like simple moving average but takes the age of each data point into account*/
 func EMA( seriesSource *Receiver, window int, priceType string, optionalName string) *Receiver {
-
 	signal_id := seriesSource.name + " " + string(window) + " "+  priceType
-
 	if _, ok := compiler_handlers[signal_id]; ok {
 		listener := compiler_handlers[signal_id].Listen()
 		listener.name = optionalName
 		return &listener
 	}
 	composer := NewBroadcaster()
+	composer.name = optionalName
 	compiler_handlers[signal_id] = composer
 	fmt.Println( optionalName + " created at ", time.Now()  )
 	go ema_eval(seriesSource,&composer, optionalName, window, priceType)
@@ -247,7 +248,6 @@ func EMA( seriesSource *Receiver, window int, priceType string, optionalName str
 	listener.name = optionalName
 	return &listener
 }
-
 
 func ema_eval( source *Receiver, output *Broadcaster, id string, window int, priceType string) {
 	index := price_map[priceType]
@@ -282,11 +282,15 @@ func ema_eval( source *Receiver, output *Broadcaster, id string, window int, pri
 		} else {
 			ret_value = ema_prev
 		}
+		if id == "short"{
+			fmt.Println("ema_short_variables", closePrices, "resulted in ", ret_value)
+		} else if id == "long"{
+			fmt.Println("ema_long_variables", closePrices, "resulted in ", ret_value)
+		}
 		output.Write(ret_value)
 		fmt.Println(id, " RECEIVED at time ", time.Now()   , " from receiver ", source.name  )
 	}
 }
-
 
 func MIN( seriesSource *Receiver, window int, priceType string, optionalName string) *Receiver {
 	signal_id := seriesSource.name + " " + string(window) + " "+  priceType
@@ -296,6 +300,7 @@ func MIN( seriesSource *Receiver, window int, priceType string, optionalName str
 		return &listener
 	}
 	composer := NewBroadcaster()
+	composer.name = optionalName
 	compiler_handlers[signal_id] = composer
 	fmt.Println( "MIN " + signal_id + " created at ", time.Now()  )
 	go min_eval( seriesSource,&composer, optionalName, window, priceType)
@@ -333,8 +338,6 @@ func min_eval( source *Receiver, output *Broadcaster, id string, window int, pri
 	}
 }
 
-
-
 func MAX( seriesSource *Receiver, window int, priceType string, optionalName string) *Receiver {
 	signal_id := seriesSource.name + " " + string(window) + " "+  priceType
 	if _, ok := compiler_handlers[signal_id]; ok {
@@ -343,6 +346,7 @@ func MAX( seriesSource *Receiver, window int, priceType string, optionalName str
 		return &listener
 	}
 	composer := NewBroadcaster()
+	composer.name = optionalName
 	compiler_handlers[signal_id] = composer
 	fmt.Println( "MAX " +  signal_id + " created at ", time.Now()  )
 	go max_eval( seriesSource,&composer, optionalName, window, priceType)
@@ -381,39 +385,108 @@ func max_eval( source *Receiver, output *Broadcaster, id string, window int, pri
 	}
 }
 
-
 func simple_2SMA_Strategy(a *Receiver , shortWindow int, longWindow int, quantity int, priceType string, optionalName string) *Receiver{
 	if _, ok := compiler_handlers[optionalName]; ok {
 		listener := compiler_handlers[optionalName].Listen()
 		return &listener
 	}
 	composer := NewBroadcaster()
+	composer.name = optionalName
 	compiler_handlers[optionalName] = composer
 	fmt.Println( optionalName + " created at ", time.Now())
-	buyOrder := GTE(SMA(seriesSource("EUR CASH USD IDEALPRO"), longWindow, priceType,"long"),
-		SMA(seriesSource("EUR CASH USD IDEALPRO"), shortWindow, priceType,"short"), "buyOrder")
-	sellOrder := GTE(SMA(seriesSource("EUR CASH USD IDEALPRO"), shortWindow,priceType,"short"),
-		SMA(seriesSource("EUR CASH USD IDEALPRO"), longWindow, priceType,"long"), "sellOrder")
-	SUBTRACT(sellOrder, buyOrder, optionalName)
-
-
-
-	//buyOrder := GTE(SMA(a, longWindow, priceType,"long"),
-	//	SMA(a, shortWindow, priceType,"short"), "buyOrder")
-	//sellOrder := GTE(SMA(a, shortWindow,priceType,"short"),
-	//	SMA(a, longWindow, priceType,"long"), "sellOrder")
-	//SUBTRACT(sellOrder, buyOrder, optionalName)
+	buyOrder := GTE(SMA(seriesSource("EUR CASH USD IDEALPRO"), longWindow, priceType,"sma_0"),
+		SMA(seriesSource("EUR CASH USD IDEALPRO"), shortWindow, priceType,"sma_1"), "buyOrder")
+	sellOrder := GTE(SMA(seriesSource("EUR CASH USD IDEALPRO"), shortWindow,priceType,"sma_3"),
+		SMA(seriesSource("EUR CASH USD IDEALPRO"), longWindow, priceType,"sma_2"), "sellOrder")
+	time.Sleep(4)
+	// TODO: add bool return from primitives, to ensure that they've entered their prim_eval functions
+	orderSignal := SUBTRACT(sellOrder, buyOrder, optionalName)
+	go simple_2SMA_Strategy_eval( orderSignal, &composer, optionalName)
 	listener := composer.Listen()
 	listener.name = optionalName
 	return &listener
 }
 
-func simple_2SMA_Strategy_eval( a *Receiver, ){
-
+func simple_2SMA_Strategy_eval( source_a *Receiver, output *Broadcaster, optionalName string ){
+	var hostName = "127.0.0.1"
+	var portNum =  "19192"
+	//var service = hostName + ":" + portNum
+	//var RemoteAddr, _ = net.ResolveUDPAddr("udp", service)
+	println("Starting port: " , portNum)
+	var conn, _ = net.Dial("tcp", hostName + ":"+ portNum)
+	for a := source_a.Read(); a != nil; {
+		data_a := fmt.Sprintf("%v", a)
+		a_float, _ := strconv.ParseFloat(data_a, 64)
+		if (a_float == 1.0){   // buy
+			message := []byte("1")
+			_, _ = conn.Write(message)
+			fmt.Fprintf(conn, "")
+			output.Write(1)
+			continue
+		}
+		if (a_float == -1.0){   // sell
+			message := []byte("-1")
+			_, _ = conn.Write(message)
+			fmt.Fprintf(conn, "")
+			output.Write(-1)
+			continue
+		}
+		if( a_float == 0.0) {continue}   // do nothing
+		fmt.Println("Incorrect Order Signal: " , data_a )
+	}
 }
 
-
-func brokerRequest( orderSignal *Receiver){
+func simple_2EMA_strategy(a *Receiver , shortWindow int, longWindow int, quantity int, priceType string, optionalName string) *Receiver{
+	if _, ok := compiler_handlers[optionalName]; ok {
+		listener := compiler_handlers[optionalName].Listen()
+		return &listener
+	}
+	composer := NewBroadcaster()
+	composer.name = optionalName
+	compiler_handlers[optionalName] = composer
+	fmt.Println( optionalName + " created at ", time.Now())
+	buyOrder := GTE(EMA(seriesSource("EUR CASH USD IDEALPRO"), longWindow, priceType,"long"),
+		EMA(seriesSource("EUR CASH USD IDEALPRO"), shortWindow, priceType,"short"), "buyOrder")
+	sellOrder := GTE(EMA(seriesSource("EUR CASH USD IDEALPRO"), shortWindow,priceType,"short"),
+		EMA(seriesSource("EUR CASH USD IDEALPRO"), longWindow, priceType,"long"), "sellOrder")
+	time.Sleep(4)
+	// TODO: add bool return from primitives, to ensure that they've entered their prim_eval functions
+	//orderSignal := SUBTRACT(sellOrder, buyOrder, optionalName)
+	SUBTRACT(sellOrder, buyOrder, optionalName)
+	//go simple_2EMA_Strategy_eval( orderSignal, &composer, optionalName)
+	listener := composer.Listen()
+	listener.name = optionalName
+	return &listener
+}
+func simple_2EMA_Strategy_eval( source_a *Receiver, output *Broadcaster, optionalName string ){
+	var hostName = "127.0.0.1"
+	var portNum =  "19192"
+	//var service = hostName + ":" + portNum
+	//var RemoteAddr, _ = net.ResolveUDPAddr("udp", service)
+	println("Starting port: " , portNum)
+	var conn, _ = net.Dial("tcp", hostName + ":"+ portNum)
+	for a := source_a.Read(); a != nil; {
+		data_a := fmt.Sprintf("%v", a)
+		a_float, _ := strconv.ParseFloat(data_a, 64)
+		if (a_float == 1.0){   // buy
+			message := []byte("1")
+			_, _ = conn.Write(message)
+			fmt.Fprintf(conn, "")
+			output.Write(1)
+			continue
+		}
+		if (a_float == -1.0){   // sell
+			message := []byte("-1")
+			_, _ = conn.Write(message)
+			fmt.Fprintf(conn, "")
+			output.Write(-1)
+			continue
+		}
+		if( a_float == 0.0) {continue}   // do nothing
+		fmt.Println("Incorrect Order Signal: " , data_a )
+	}
+}
+func brokerRequest(orderSignal *Receiver){
 
 }
 
@@ -438,11 +511,9 @@ func seriesSource(source string ) *Receiver {
 		print("Returning same source pointer!" )
 		return &listener
 	}
-
 	composer := NewBroadcaster()
 	handlers[source] = composer
 	composer.name = source
-
 	go sinkSource(&composer, source)
 	listener := composer.Listen()
 	listener.name = source
@@ -450,19 +521,15 @@ func seriesSource(source string ) *Receiver {
 }
 
 func sinkSource( composer *Broadcaster, contract string){
-
 	var hostName = "127.0.0.1"
 	var portNum =  "19192"
 	//var service = hostName + ":" + portNum
 	//var RemoteAddr, _ = net.ResolveUDPAddr("udp", service)
 	println("Starting port: " , portNum)
 	var conn, _ = net.Dial("tcp", hostName + ":"+ portNum)
-
 	message := []byte(contract)  // specify contract details, max period,
 	_, _ = conn.Write(message)
-
 	barrier.Add(1)
-
 	for{
 		// send to socket
 		fmt.Fprintf(conn, "")

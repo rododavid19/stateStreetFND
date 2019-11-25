@@ -30,7 +30,8 @@ func main(){
 	//SUBTRACT(seriesSource("EUR CASH USD IDEALPRO"), seriesSource("EUR CASH USD IDEALPRO"), "subtract")
 	//GTE(seriesSource("EUR CASH USD IDEALPRO"), seriesSource("EUR CASH USD IDEALPRO"), "gte")
 
-	simple_2SMA_Strategy(seriesSource("EUR CASH USD IDEALPRO"), 2,3,20,"close","2SMA_Strategy" )
+	//simple_2SMA_Strategy(seriesSource("EUR CASH USD IDEALPRO"), 2,3,20,"close","2SMA_Strategy" )
+	simple_2EMA_strategy(seriesSource("EUR CASH USD IDEALPRO"), 2, 3, 20, "close", "2EMA_Strategy")
 	time.Sleep(1)
 	barrier.Wait()
 }

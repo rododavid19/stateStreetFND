@@ -174,7 +174,7 @@ class testNetwork_ColumnMethods(unittest.TestCase):
             putColumns(df, columnDict, newDf)
             self.assertRaises(Exception, piEval, n, sourceDict)
 
-class testNetwork_SIMPLESMASTRATEGYTESTS(unittest.TestCase):
+class testNetwork_SIMPLEEMASTRATEGYTESTS(unittest.TestCase):
     def test_SIMPLE2SMA_NOV2019TICK(self):
         with Network() as n:
             filename = "DAT_ASCII_EURUSD_T_201910.csv"
@@ -191,7 +191,7 @@ class testNetwork_SIMPLESMASTRATEGYTESTS(unittest.TestCase):
     def test_SIMPLE2SMA_SEP2007TICK(self):
         with Network() as n:
             filename="DAT_ASCII_EURUSD_T_200709.csv"
-            forex=pd.read.csv(filename)
+            forex=pd.read_csv(filename)
             sourceDict = {'forex': forex}
             df = seriesSource('forex')
             simple_2SMA_Strategy(df, shortWindow=50, longWindow=200, quantity=20, name='2SMA')
@@ -233,6 +233,45 @@ class testNetwork_SIMPLESMASTRATEGYTESTS(unittest.TestCase):
             sinkDict = piEval(n, sourceDict)
             n.report()
 
+class testNetwork_SIMPLESMASTRATEGYTESTS(unittest.TestCase):
+    def test_SIMPLE2EMA_NOV2019TICK(self):
+        with Network() as n:
+            filename = "DAT_ASCII_EURUSD_T_201910.csv"
+            forex = pd.read_csv(filename)
+            sourceDict = {'forex': forex}
+            df = seriesSource('forex')
+            simple_2EMA_Strategy(df, shortWindow=50, longWindow=200, quantity=20, name='2EMA')
+            sinkDict = piEval(n, sourceDict)
+            Orders = sinkDict.get('2EMA/buy_sellOrder')
+            Profit_And_Loss = profitCalc(Orders, forex, quantity=20)
+            graphit(Profit_And_Loss, filename)
+            n.report()
+
+    def test_SIMPLE2EMA_SEP2007TICK(self):
+        with Network() as n:
+            filename="DAT_ASCII_EURUSD_T_200709.csv"
+            forex=pd.read_csv(filename)
+            sourceDict = {'forex': forex}
+            df = seriesSource('forex')
+            simple_2EMA_Strategy(df, shortWindow=50, longWindow=200, quantity=20, name='2EMA')
+            sinkDict = piEval(n, sourceDict)
+            Orders = sinkDict.get('2EMA/buy_sellOrder')
+            Profit_And_Loss = profitCalc(Orders, forex, quantity=20)
+            graphit(Profit_And_Loss,filename)
+            n.report()
+
+    def test_SIMPLE2EMA_OCT2013TICK(self):
+        with Network() as n:
+            filename="DAT_ASCII_EURUSD_T_201310.csv"
+            forex = pd.read_csv(filename)
+            sourceDict = {'forex': forex}
+            df = seriesSource('forex')
+            simple_2EMA_Strategy(df, shortWindow=50, longWindow=200, quantity=20, name='2EMA')
+            sinkDict = piEval(n, sourceDict)
+            Orders = sinkDict.get('2EMA/buy_sellOrder')
+            Profit_And_Loss = profitCalc(Orders, forex, quantity=20)
+            graphit(Profit_And_Loss,filename)
+            n.report()
 
 class testNetwork_EMA_STDEV_MIN_MAX_SUM_DELAY(unittest.TestCase):
 
